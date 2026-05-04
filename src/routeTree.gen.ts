@@ -11,6 +11,8 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ApiEventsRouteImport } from './routes/api/events'
+import { Route as ApiWebhooksHeliusRouteImport } from './routes/api/webhooks/helius'
 
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
@@ -22,31 +24,49 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiEventsRoute = ApiEventsRouteImport.update({
+  id: '/api/events',
+  path: '/api/events',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiWebhooksHeliusRoute = ApiWebhooksHeliusRouteImport.update({
+  id: '/api/webhooks/helius',
+  path: '/api/webhooks/helius',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/settings': typeof SettingsRoute
+  '/api/events': typeof ApiEventsRoute
+  '/api/webhooks/helius': typeof ApiWebhooksHeliusRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/settings': typeof SettingsRoute
+  '/api/events': typeof ApiEventsRoute
+  '/api/webhooks/helius': typeof ApiWebhooksHeliusRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/settings': typeof SettingsRoute
+  '/api/events': typeof ApiEventsRoute
+  '/api/webhooks/helius': typeof ApiWebhooksHeliusRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/settings'
+  fullPaths: '/' | '/settings' | '/api/events' | '/api/webhooks/helius'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/settings'
-  id: '__root__' | '/' | '/settings'
+  to: '/' | '/settings' | '/api/events' | '/api/webhooks/helius'
+  id: '__root__' | '/' | '/settings' | '/api/events' | '/api/webhooks/helius'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   SettingsRoute: typeof SettingsRoute
+  ApiEventsRoute: typeof ApiEventsRoute
+  ApiWebhooksHeliusRoute: typeof ApiWebhooksHeliusRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -65,12 +85,28 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/events': {
+      id: '/api/events'
+      path: '/api/events'
+      fullPath: '/api/events'
+      preLoaderRoute: typeof ApiEventsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/webhooks/helius': {
+      id: '/api/webhooks/helius'
+      path: '/api/webhooks/helius'
+      fullPath: '/api/webhooks/helius'
+      preLoaderRoute: typeof ApiWebhooksHeliusRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   SettingsRoute: SettingsRoute,
+  ApiEventsRoute: ApiEventsRoute,
+  ApiWebhooksHeliusRoute: ApiWebhooksHeliusRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

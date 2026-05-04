@@ -1,10 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Header } from "@/components/sentinel/Header";
 import { BehaviorPanel } from "@/components/sentinel/BehaviorPanel";
 import { ActivityFeed } from "@/components/sentinel/ActivityFeed";
 import { SecurityPanel } from "@/components/sentinel/SecurityPanel";
 import { AnomalyModal } from "@/components/sentinel/AnomalyModal";
+import { Textarea } from "@/components/ui/textarea";
+import { toast } from "sonner";
+import { useSentinel } from "@/providers/SentinelProvider";
 import type { WalletStatus } from "@/components/sentinel/StatusBadge";
 import { AlertTriangle, Home, Activity, Bell, Settings } from "lucide-react";
 
@@ -23,20 +26,45 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
+  const { selectedWallet, events, settings, simulate } = useSentinel();
   const [open, setOpen] = useState(false);
-  const [status, setStatus] = useState<WalletStatus>("normal");
+  const [txToSimulate, setTxToSimulate] = useState("");
+  const [simState, setSimState] = useState<"idle" | "loading" | "done">("idle");
+  const [simSummary, setSimSummary] = useState<string>("");
+
+  const status = useMemo<WalletStatus>(() => {
+    if (events.some((e) => e.risk === "high")) return "threat";
+    if (events.some((e) => e.risk === "medium")) return "suspicious";
+    return "normal";
+  }, [events]);
 
   const trigger = () => {
-    setStatus("threat");
     setOpen(true);
   };
   const onApprove = () => {
     setOpen(false);
-    setStatus("suspicious");
   };
   const onKill = () => {
     setOpen(false);
-    setStatus("normal");
+  };
+
+  const runSimulation = async () => {
+    if (!txToSimulate.trim()) {
+      toast.error("Paste a base64 transaction first");
+      return;
+    }
+    setSimState("loading");
+    const result = await simulate(txToSimulate.trim());
+    setSimState("done");
+    if (!result.ok) {
+      const reason = result.error ?? "Unknown simulation error";
+      setSimSummary(`Simulation failed: ${reason}`);
+      toast.error("Simulation failed");
+      return;
+    }
+    const lines = result.logs.slice(-3).join(" | ");
+    setSimSummary(`Simulation passed. Logs: ${lines || "No logs."}`);
+    toast.success("Simulation completed");
   };
 
   return (
@@ -47,7 +75,7 @@ function Index() {
       <main className="relative mx-auto max-w-7xl space-y-5 p-4 md:p-6">
         <Header
           status={status}
-          wallet="9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVRLh"
+          wallet={selectedWallet ?? "No wallet connected"}
         />
 
         <Hero onTrigger={trigger} status={status} />
@@ -55,10 +83,17 @@ function Index() {
         <div className="grid gap-5 lg:grid-cols-3">
           <div className="space-y-5 lg:col-span-2">
             <BehaviorPanel />
-            <ActivityFeed />
+            <ActivityFeed items={events} />
           </div>
           <div className="space-y-5">
-            <SecurityPanel />
+            <SecurityPanel events={events} />
+            <SimulationCard
+              onSimulate={runSimulation}
+              value={txToSimulate}
+              onChange={setTxToSimulate}
+              status={simState}
+              summary={simSummary}
+            />
             <SwitchCard onTrigger={trigger} />
           </div>
         </div>
@@ -93,8 +128,52 @@ function Index() {
         })}
       </nav>
 
-      <AnomalyModal open={open} onApprove={onApprove} onKill={onKill} onClose={() => setOpen(false)} />
+      <AnomalyModal
+        open={open}
+        countdown={settings.countdown}
+        onApprove={onApprove}
+        onKill={onKill}
+        onClose={() => setOpen(false)}
+      />
     </div>
+  );
+}
+
+function SimulationCard({
+  value,
+  onChange,
+  onSimulate,
+  status,
+  summary,
+}: {
+  value: string;
+  onChange: (next: string) => void;
+  onSimulate: () => void;
+  status: "idle" | "loading" | "done";
+  summary: string;
+}) {
+  return (
+    <section className="glass rounded-2xl p-6">
+      <h2 className="mb-1 text-sm font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+        Pre-sign simulation
+      </h2>
+      <p className="mb-4 text-xs text-muted-foreground">
+        Paste a base64 Solana transaction to dry-run before signing.
+      </p>
+      <Textarea
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder="AQAAAAAAAAAAAA..."
+        className="mb-3 min-h-20 font-mono text-xs"
+      />
+      <button
+        onClick={onSimulate}
+        className="rounded-xl bg-safe/15 px-4 py-2 text-xs font-semibold text-safe hover:bg-safe/25"
+      >
+        {status === "loading" ? "Simulating..." : "Run simulation"}
+      </button>
+      {summary ? <p className="mt-3 text-xs text-muted-foreground">{summary}</p> : null}
+    </section>
   );
 }
 

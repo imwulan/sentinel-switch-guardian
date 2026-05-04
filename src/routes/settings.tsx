@@ -3,6 +3,9 @@ import { useState } from "react";
 import { Shield, ArrowLeft, Brain, Gauge, Bell, Lock, RotateCcw } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
+import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
+import { getDefaultSettings, useSentinelSettings } from "@/providers/SentinelProvider";
 
 export const Route = createFileRoute("/settings")({
   component: SettingsPage,
@@ -23,22 +26,39 @@ export const Route = createFileRoute("/settings")({
   }),
 });
 
-const DEFAULTS = {
-  lowMed: 35,
-  medHigh: 70,
-  autoKill: 85,
-  countdown: 10,
-  learning: true,
-  strict: false,
-  notifyPush: true,
-  notifyEmail: false,
-  killUnknownContracts: true,
-};
-
 function SettingsPage() {
-  const [s, setS] = useState(DEFAULTS);
-  const update = <K extends keyof typeof DEFAULTS>(k: K, v: (typeof DEFAULTS)[K]) =>
-    setS((prev) => ({ ...prev, [k]: v }));
+  const { settings: s, setSettings, updateSettings } = useSentinelSettings();
+  const defaults = getDefaultSettings();
+  const [addressInput, setAddressInput] = useState("");
+  const [programInput, setProgramInput] = useState("");
+  const update = updateSettings;
+
+  const addAddress = (kind: "allowlistedAddresses" | "blockedAddresses") => {
+    const next = addressInput.trim();
+    if (!next) return;
+    if (s[kind].includes(next)) {
+      toast.message("Already added");
+      return;
+    }
+    update(kind, [...s[kind], next]);
+    setAddressInput("");
+  };
+
+  const addProgram = (kind: "allowlistedPrograms" | "blockedPrograms") => {
+    const next = programInput.trim();
+    if (!next) return;
+    if (s[kind].includes(next)) {
+      toast.message("Already added");
+      return;
+    }
+    update(kind, [...s[kind], next]);
+    setProgramInput("");
+  };
+
+  const removeItem = (
+    kind: "allowlistedAddresses" | "blockedAddresses" | "allowlistedPrograms" | "blockedPrograms",
+    value: string
+  ) => update(kind, s[kind].filter((x) => x !== value));
 
   return (
     <div className="min-h-screen pb-24 md:pb-8">
@@ -65,7 +85,7 @@ function SettingsPage() {
           </div>
 
           <button
-            onClick={() => setS(DEFAULTS)}
+            onClick={() => setSettings(defaults)}
             className="hidden items-center gap-2 rounded-xl border border-border bg-secondary/60 px-3 py-2 text-xs font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground md:inline-flex"
           >
             <RotateCcw className="h-3.5 w-3.5" />
@@ -261,9 +281,79 @@ function SettingsPage() {
           />
         </section>
 
+        <section className="glass rounded-2xl p-6">
+          <h2 className="text-base font-semibold">Allowlist & Blocklist</h2>
+          <p className="mb-4 text-xs text-muted-foreground">
+            Define trusted or blocked addresses and program IDs.
+          </p>
+
+          <div className="grid gap-3">
+            <div className="grid gap-2 md:grid-cols-[1fr_auto_auto]">
+              <Input
+                value={addressInput}
+                onChange={(e) => setAddressInput(e.target.value)}
+                placeholder="Wallet address"
+              />
+              <button
+                className="rounded-lg border border-safe/40 px-3 py-2 text-xs text-safe"
+                onClick={() => addAddress("allowlistedAddresses")}
+              >
+                Add allow
+              </button>
+              <button
+                className="rounded-lg border border-threat/40 px-3 py-2 text-xs text-threat"
+                onClick={() => addAddress("blockedAddresses")}
+              >
+                Add block
+              </button>
+            </div>
+
+            <div className="grid gap-2 md:grid-cols-[1fr_auto_auto]">
+              <Input
+                value={programInput}
+                onChange={(e) => setProgramInput(e.target.value)}
+                placeholder="Program ID"
+              />
+              <button
+                className="rounded-lg border border-safe/40 px-3 py-2 text-xs text-safe"
+                onClick={() => addProgram("allowlistedPrograms")}
+              >
+                Allow program
+              </button>
+              <button
+                className="rounded-lg border border-threat/40 px-3 py-2 text-xs text-threat"
+                onClick={() => addProgram("blockedPrograms")}
+              >
+                Block program
+              </button>
+            </div>
+          </div>
+
+          <ListSection
+            title="Allowed addresses"
+            items={s.allowlistedAddresses}
+            onRemove={(v) => removeItem("allowlistedAddresses", v)}
+          />
+          <ListSection
+            title="Blocked addresses"
+            items={s.blockedAddresses}
+            onRemove={(v) => removeItem("blockedAddresses", v)}
+          />
+          <ListSection
+            title="Allowed programs"
+            items={s.allowlistedPrograms}
+            onRemove={(v) => removeItem("allowlistedPrograms", v)}
+          />
+          <ListSection
+            title="Blocked programs"
+            items={s.blockedPrograms}
+            onRemove={(v) => removeItem("blockedPrograms", v)}
+          />
+        </section>
+
         <div className="flex items-center justify-end gap-3 pt-2">
           <button
-            onClick={() => setS(DEFAULTS)}
+            onClick={() => setSettings(defaults)}
             className="rounded-xl border border-border bg-secondary/60 px-4 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground md:hidden"
           >
             Reset
@@ -335,6 +425,36 @@ function ToggleRow({
         <p className="text-[11px] text-muted-foreground">{hint}</p>
       </div>
       <Switch checked={checked} onCheckedChange={onChange} aria-label={label} />
+    </div>
+  );
+}
+
+function ListSection({
+  title,
+  items,
+  onRemove,
+}: {
+  title: string;
+  items: string[];
+  onRemove: (value: string) => void;
+}) {
+  return (
+    <div className="mt-4 rounded-xl border border-border bg-secondary/30 p-3">
+      <p className="mb-2 text-xs uppercase tracking-wider text-muted-foreground">{title}</p>
+      {items.length === 0 ? (
+        <p className="text-xs text-muted-foreground">No entries yet.</p>
+      ) : (
+        <ul className="space-y-1">
+          {items.map((value) => (
+            <li key={value} className="flex items-center justify-between gap-2 text-xs">
+              <span className="truncate font-mono">{value}</span>
+              <button className="text-threat" onClick={() => onRemove(value)}>
+                Remove
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }

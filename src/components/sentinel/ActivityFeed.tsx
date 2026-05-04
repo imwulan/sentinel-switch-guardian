@@ -1,40 +1,30 @@
-import { ArrowUpRight, ArrowLeftRight, Sparkles, FileSignature, Coins } from "lucide-react";
+import { ArrowUpRight, ArrowLeftRight, Sparkles, FileSignature } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-type Risk = "low" | "medium" | "high";
-type Item = {
-  id: string;
-  kind: "send" | "swap" | "mint" | "contract" | "stake";
-  label: string;
-  detail: string;
-  time: string;
-  risk: Risk;
-};
-
-const items: Item[] = [
-  { id: "1", kind: "swap", label: "Swap", detail: "12.5 SOL → USDC · Jupiter", time: "2s ago", risk: "low" },
-  { id: "2", kind: "contract", label: "Contract call", detail: "Unknown program · approve(∞)", time: "47s ago", risk: "high" },
-  { id: "3", kind: "send", label: "Transfer", detail: "0.8 SOL → 7Hk2…q9Lm", time: "3m ago", risk: "low" },
-  { id: "4", kind: "mint", label: "NFT mint", detail: "Tensorian #2841", time: "12m ago", risk: "medium" },
-  { id: "5", kind: "stake", label: "Stake", detail: "150 SOL → Marinade", time: "1h ago", risk: "low" },
-  { id: "6", kind: "swap", label: "Swap", detail: "USDC → BONK · Raydium", time: "2h ago", risk: "low" },
-];
+import type { SentinelEvent } from "@/lib/sentinel-types";
 
 const iconMap = {
-  send: ArrowUpRight,
+  transfer: ArrowUpRight,
   swap: ArrowLeftRight,
-  mint: Sparkles,
-  contract: FileSignature,
-  stake: Coins,
+  program_call: FileSignature,
+  unknown: Sparkles,
 };
 
-const riskStyle: Record<Risk, string> = {
+const riskStyle = {
   low: "text-safe bg-safe/10 border-safe/30",
   medium: "text-warn bg-warn/10 border-warn/30",
   high: "text-threat bg-threat/10 border-threat/30",
 };
 
-export function ActivityFeed() {
+function relativeTime(timestamp: number) {
+  const sec = Math.max(1, Math.floor((Date.now() - timestamp) / 1000));
+  if (sec < 60) return `${sec}s ago`;
+  const min = Math.floor(sec / 60);
+  if (min < 60) return `${min}m ago`;
+  const hrs = Math.floor(min / 60);
+  return `${hrs}h ago`;
+}
+
+export function ActivityFeed({ items }: { items: SentinelEvent[] }) {
   return (
     <section className="glass rounded-2xl p-6">
       <div className="mb-4 flex items-center justify-between">
@@ -59,7 +49,7 @@ export function ActivityFeed() {
                 <p className="truncate text-sm font-medium">{it.label}</p>
                 <p className="truncate font-mono text-xs text-muted-foreground">{it.detail}</p>
               </div>
-              <span className="hidden text-xs text-muted-foreground sm:inline">{it.time}</span>
+              <span className="hidden text-xs text-muted-foreground sm:inline">{relativeTime(it.timestamp)}</span>
               <span
                 className={cn(
                   "rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider",
@@ -71,6 +61,11 @@ export function ActivityFeed() {
             </li>
           );
         })}
+        {items.length === 0 && (
+          <li className="py-8 text-center text-xs text-muted-foreground">
+            Connect a wallet to stream activity.
+          </li>
+        )}
       </ul>
     </section>
   );

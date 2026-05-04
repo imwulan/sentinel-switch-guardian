@@ -1,6 +1,19 @@
 import { Lock, ShieldCheck } from "lucide-react";
+import type { SentinelEvent } from "@/lib/sentinel-types";
 
-export function SecurityPanel({ confidence = 96 }: { confidence?: number }) {
+export function SecurityPanel({
+  confidence = 96,
+  events,
+}: {
+  confidence?: number;
+  events: SentinelEvent[];
+}) {
+  const highRisk = events.filter((e) => e.risk === "high").length;
+  const lastBlocked = events.find((e) => e.risk === "high");
+  const lastBlockedTime = lastBlocked
+    ? `${Math.max(1, Math.floor((Date.now() - lastBlocked.timestamp) / 60000))}m ago`
+    : "No recent threats";
+
   return (
     <section className="glass rounded-2xl p-6">
       <div className="mb-5 flex items-center justify-between">
@@ -39,11 +52,11 @@ export function SecurityPanel({ confidence = 96 }: { confidence?: number }) {
       <div className="grid grid-cols-2 gap-4 border-t border-border/40 pt-4 text-xs">
         <div>
           <p className="text-muted-foreground">Last threat blocked</p>
-          <p className="mt-0.5 font-mono">2h 14m ago</p>
+          <p className="mt-0.5 font-mono">{lastBlockedTime}</p>
         </div>
         <div>
           <p className="text-muted-foreground">Threats this week</p>
-          <p className="mt-0.5 font-mono text-safe">3 blocked</p>
+          <p className="mt-0.5 font-mono text-safe">{highRisk} flagged</p>
         </div>
       </div>
     </section>

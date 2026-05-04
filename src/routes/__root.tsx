@@ -1,6 +1,9 @@
 import { Outlet, Link, createRootRoute, HeadContent, Scripts } from "@tanstack/react-router";
+import { Toaster } from "@/components/ui/sonner";
+import { SentinelProvider } from "@/providers/SentinelProvider";
 
 import appCss from "../styles.css?url";
+import walletAdapterCss from "@solana/wallet-adapter-react-ui/styles.css?url";
 
 function NotFoundComponent() {
   return (
@@ -47,6 +50,7 @@ export const Route = createRootRoute({
     ],
     links: [
       { rel: "stylesheet", href: appCss },
+      { rel: "stylesheet", href: walletAdapterCss },
       {
         rel: "stylesheet",
         href: "https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap",
@@ -73,5 +77,10 @@ function RootShell({ children }: { children: React.ReactNode }) {
 }
 
 function RootComponent() {
-  return <Outlet />;
+  return (
+    <SentinelProvider>
+      <Outlet />
+      <Toaster richColors position="top-right" />
+    </SentinelProvider>
+  );
 }

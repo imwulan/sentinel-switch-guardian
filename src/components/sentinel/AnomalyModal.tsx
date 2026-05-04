@@ -4,17 +4,18 @@ import { cn } from "@/lib/utils";
 
 type Props = {
   open: boolean;
+  countdown: number;
   onApprove: () => void;
   onKill: () => void;
   onClose: () => void;
 };
 
-export function AnomalyModal({ open, onApprove, onKill, onClose }: Props) {
-  const [count, setCount] = useState(10);
+export function AnomalyModal({ open, countdown, onApprove, onKill, onClose }: Props) {
+  const [count, setCount] = useState(countdown);
 
   useEffect(() => {
     if (!open) {
-      setCount(10);
+      setCount(countdown);
       return;
     }
     const id = setInterval(() => {
@@ -28,11 +29,11 @@ export function AnomalyModal({ open, onApprove, onKill, onClose }: Props) {
       });
     }, 1000);
     return () => clearInterval(id);
-  }, [open, onKill]);
+  }, [open, countdown, onKill]);
 
   if (!open) return null;
 
-  const pct = (count / 10) * 100;
+  const pct = (count / Math.max(1, countdown)) * 100;
 
   return (
     <div className="fixed inset-0 z-50 grid place-items-center px-4 animate-fade-in">
