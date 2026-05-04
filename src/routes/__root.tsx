@@ -29,19 +29,27 @@ export const Route = createRootRoute({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { title: "Sentinel Switch — Behavioral AI Firewall on Solana" },
+      {
+        name: "description",
+        content:
+          "Sentinel Switch: a behavioral AI firewall that protects Solana wallets with real-time anomaly detection and a kill-switch.",
+      },
+      { name: "author", content: "Sentinel Switch" },
+      { property: "og:title", content: "Sentinel Switch — Behavioral AI Firewall on Solana" },
+      {
+        property: "og:description",
+        content:
+          "Real-time behavioral monitoring + instant kill-switch protection for Solana wallets.",
+      },
       { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary" },
-      { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
     links: [
+      { rel: "stylesheet", href: appCss },
       {
         rel: "stylesheet",
-        href: appCss,
+        href: "https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap",
       },
     ],
   }),
@@ -52,7 +60,7 @@ export const Route = createRootRoute({
 
 function RootShell({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" className="dark">
       <head>
         <HeadContent />
       </head>
