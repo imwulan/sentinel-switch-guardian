@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { Header } from "@/components/sentinel/Header";
 import { BehaviorPanel } from "@/components/sentinel/BehaviorPanel";
@@ -71,17 +71,26 @@ function Index() {
           { icon: Activity, label: "Activity" },
           { icon: Bell, label: "Alerts" },
           { icon: Settings, label: "Settings" },
-        ].map(({ icon: Icon, label }, i) => (
-          <button
-            key={label}
-            className={`flex flex-col items-center gap-1 rounded-xl py-2 text-[10px] uppercase tracking-wider ${
-              i === 0 ? "text-safe" : "text-muted-foreground"
-            }`}
-          >
-            <Icon className="h-4 w-4" />
-            {label}
-          </button>
-        ))}
+        ].map(({ icon: Icon, label }, i) => {
+          const isSettings = label === "Settings";
+          const className = `flex flex-col items-center gap-1 rounded-xl py-2 text-[10px] uppercase tracking-wider ${
+            i === 0 ? "text-safe" : "text-muted-foreground"
+          }`;
+          if (isSettings) {
+            return (
+              <Link key={label} to="/settings" className={className}>
+                <Icon className="h-4 w-4" />
+                {label}
+              </Link>
+            );
+          }
+          return (
+            <button key={label} className={className}>
+              <Icon className="h-4 w-4" />
+              {label}
+            </button>
+          );
+        })}
       </nav>
 
       <AnomalyModal open={open} onApprove={onApprove} onKill={onKill} onClose={() => setOpen(false)} />
