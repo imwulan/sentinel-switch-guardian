@@ -78,10 +78,15 @@ function Index() {
           wallet={selectedWallet ?? "No wallet connected"}
         />
 
+        <SubNav />
+
         <Hero onTrigger={trigger} status={status} />
+
+        <ThreatTicker />
 
         <div className="grid gap-5 lg:grid-cols-3">
           <div className="space-y-5 lg:col-span-2">
+            <AIScoreCard status={status} />
             <BehaviorPanel />
             <ActivityFeed items={events} />
           </div>
