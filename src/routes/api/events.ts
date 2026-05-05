@@ -4,7 +4,7 @@ import { listWalletEvents } from "@/server/event-store";
 export const Route = createFileRoute("/api/events")({
   server: {
     handlers: {
-      GET: async ({ request }) => {
+      GET: async ({ request }: { request: Request }) => {
         const url = new URL(request.url);
         const wallet = url.searchParams.get("wallet");
         if (!wallet) {
