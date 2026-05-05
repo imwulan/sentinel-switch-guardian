@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { listWalletEvents } from "@/server/event-store";
 
 export const Route = createFileRoute("/api/events")({
+  // @ts-expect-error server handlers supported by TanStack Start runtime
   server: {
     handlers: {
       GET: async ({ request }: { request: Request }) => {
