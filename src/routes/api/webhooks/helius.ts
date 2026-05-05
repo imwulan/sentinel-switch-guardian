@@ -11,9 +11,10 @@ function getWalletFromTx(tx: Record<string, unknown>) {
 }
 
 export const Route = createFileRoute("/api/webhooks/helius")({
+  // @ts-expect-error server handlers supported by TanStack Start runtime
   server: {
     handlers: {
-      POST: async ({ request }) => {
+      POST: async ({ request }: { request: Request }) => {
         const secret =
           import.meta.env.SENTINEL_WEBHOOK_SECRET ?? import.meta.env.VITE_HELIUS_WEBHOOK_SECRET;
         if (secret) {

@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { useSentinel } from "@/providers/SentinelProvider";
 import type { WalletStatus } from "@/components/sentinel/StatusBadge";
-import { AlertTriangle, Home, Activity, Bell, Settings } from "lucide-react";
+import { AlertTriangle, Home, Activity, Bell, Settings, Wallet, Brain, ShieldCheck, Zap } from "lucide-react";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -78,10 +78,15 @@ function Index() {
           wallet={selectedWallet ?? "No wallet connected"}
         />
 
+        <SubNav />
+
         <Hero onTrigger={trigger} status={status} />
+
+        <ThreatTicker />
 
         <div className="grid gap-5 lg:grid-cols-3">
           <div className="space-y-5 lg:col-span-2">
+            <AIScoreCard status={status} />
             <BehaviorPanel />
             <ActivityFeed items={events} />
           </div>
@@ -100,32 +105,25 @@ function Index() {
       </main>
 
       {/* Mobile bottom nav */}
-      <nav className="glass-strong fixed bottom-3 left-3 right-3 z-20 grid grid-cols-4 rounded-2xl px-2 py-2 md:hidden">
+      <nav className="glass-strong fixed bottom-3 left-3 right-3 z-20 grid grid-cols-5 rounded-2xl px-2 py-2 md:hidden">
         {[
-          { icon: Home, label: "Home" },
-          { icon: Activity, label: "Activity" },
-          { icon: Bell, label: "Alerts" },
-          { icon: Settings, label: "Settings" },
-        ].map(({ icon: Icon, label }, i) => {
-          const isSettings = label === "Settings";
-          const className = `flex flex-col items-center gap-1 rounded-xl py-2 text-[10px] uppercase tracking-wider ${
-            i === 0 ? "text-safe" : "text-muted-foreground"
-          }`;
-          if (isSettings) {
-            return (
-              <Link key={label} to="/settings" className={className}>
-                <Icon className="h-4 w-4" />
-                {label}
-              </Link>
-            );
-          }
-          return (
-            <button key={label} className={className}>
-              <Icon className="h-4 w-4" />
-              {label}
-            </button>
-          );
-        })}
+          { icon: Home, label: "Home", to: "/" },
+          { icon: Wallet, label: "Wallets", to: "/wallets" },
+          { icon: Activity, label: "Audit", to: "/audit" },
+          { icon: Bell, label: "Alerts", to: "/alerts" },
+          { icon: Settings, label: "Settings", to: "/settings" },
+        ].map(({ icon: Icon, label, to }) => (
+          <Link
+            key={label}
+            to={to}
+            activeOptions={{ exact: true }}
+            className="flex flex-col items-center gap-1 rounded-xl py-2 text-[10px] uppercase tracking-wider text-muted-foreground"
+            activeProps={{ className: "flex flex-col items-center gap-1 rounded-xl py-2 text-[10px] uppercase tracking-wider text-safe" }}
+          >
+            <Icon className="h-4 w-4" />
+            {label}
+          </Link>
+        ))}
       </nav>
 
       <AnomalyModal
@@ -256,6 +254,114 @@ function SwitchCard({ onTrigger }: { onTrigger: () => void }) {
         If no decision is made within the countdown, Sentinel Switch will auto-block the
         transaction by default.
       </p>
+    </section>
+  );
+}
+
+function SubNav() {
+  const items = [
+    { to: "/", label: "Dashboard", icon: Home },
+    { to: "/wallets", label: "Wallets", icon: Wallet },
+    { to: "/intel", label: "Threat intel", icon: Brain },
+    { to: "/audit", label: "Audit log", icon: Activity },
+    { to: "/alerts", label: "Alerts", icon: Bell },
+    { to: "/pricing", label: "Pricing", icon: Zap },
+    { to: "/settings", label: "Settings", icon: Settings },
+  ];
+  return (
+    <nav className="hidden md:block">
+      <div className="glass flex flex-wrap gap-1 rounded-2xl p-1.5">
+        {items.map(({ to, label, icon: Icon }) => (
+          <Link
+            key={to}
+            to={to}
+            activeOptions={{ exact: true }}
+            className="inline-flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-medium text-muted-foreground hover:bg-secondary/60 hover:text-foreground"
+            activeProps={{ className: "inline-flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-medium bg-safe/15 text-safe" }}
+          >
+            <Icon className="h-3.5 w-3.5" />
+            {label}
+          </Link>
+        ))}
+      </div>
+    </nav>
+  );
+}
+
+function ThreatTicker() {
+  const items = [
+    "🚨 Drainer cluster active — 12 wallets compromised in the last hour",
+    "⚠️ Program Pdr…7Xa2 flagged as malicious (98% confidence)",
+    "🛡 23,901 wallets currently protected by Sentinel",
+    "🔥 $RUGME token confirmed honeypot — 100% buy tax",
+  ];
+  return (
+    <div className="glass overflow-hidden rounded-2xl">
+      <div className="flex animate-[marquee_40s_linear_infinite] gap-12 whitespace-nowrap px-4 py-2.5 text-xs text-muted-foreground">
+        {[...items, ...items].map((t, i) => (
+          <span key={i} className="inline-flex items-center gap-2">
+            <ShieldCheck className="h-3.5 w-3.5 text-safe" />
+            {t}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function AIScoreCard({ status }: { status: WalletStatus }) {
+  const score = status === "threat" ? 88 : status === "suspicious" ? 52 : 14;
+  const color = score >= 70 ? "text-threat" : score >= 35 ? "text-warn" : "text-safe";
+  const ring = score >= 70 ? "stroke-threat" : score >= 35 ? "stroke-warn" : "stroke-safe";
+  const offset = 264 - (264 * score) / 100;
+  return (
+    <section className="glass rounded-2xl p-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-sm font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+            Live AI risk score
+          </h2>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Composite of 142 behavioral, on-chain, and intel signals.
+          </p>
+        </div>
+        <Brain className="h-5 w-5 text-safe" />
+      </div>
+
+      <div className="mt-6 grid grid-cols-[auto_1fr] items-center gap-6">
+        <div className="relative h-28 w-28">
+          <svg viewBox="0 0 100 100" className="h-full w-full -rotate-90">
+            <circle cx="50" cy="50" r="42" strokeWidth="8" className="stroke-secondary" fill="none" />
+            <circle
+              cx="50" cy="50" r="42" strokeWidth="8" fill="none"
+              strokeLinecap="round"
+              className={ring}
+              strokeDasharray="264"
+              strokeDashoffset={offset}
+            />
+          </svg>
+          <div className="absolute inset-0 grid place-items-center">
+            <div className="text-center">
+              <p className={`font-mono text-2xl font-bold ${color}`}>{score}</p>
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground">/ 100</p>
+            </div>
+          </div>
+        </div>
+
+        <ul className="space-y-2 text-xs">
+          {[
+            { l: "Behavioral fit", v: status === "threat" ? "Off-baseline" : "Matches baseline", c: status === "threat" ? "text-threat" : "text-safe" },
+            { l: "Counterparty trust", v: status === "threat" ? "Unknown program" : "Allowlisted", c: status === "threat" ? "text-warn" : "text-safe" },
+            { l: "Velocity", v: "Within normal", c: "text-safe" },
+            { l: "Intel match", v: status === "threat" ? "Drainer signature" : "Clean", c: status === "threat" ? "text-threat" : "text-safe" },
+          ].map((s) => (
+            <li key={s.l} className="flex items-center justify-between rounded-lg bg-secondary/40 px-3 py-1.5">
+              <span className="text-muted-foreground">{s.l}</span>
+              <span className={`font-medium ${s.c}`}>{s.v}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
     </section>
   );
 }

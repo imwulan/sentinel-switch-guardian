@@ -9,14 +9,44 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as WalletsRouteImport } from './routes/wallets'
 import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as PricingRouteImport } from './routes/pricing'
+import { Route as IntelRouteImport } from './routes/intel'
+import { Route as AuditRouteImport } from './routes/audit'
+import { Route as AlertsRouteImport } from './routes/alerts'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiEventsRouteImport } from './routes/api/events'
 import { Route as ApiWebhooksHeliusRouteImport } from './routes/api/webhooks/helius'
 
+const WalletsRoute = WalletsRouteImport.update({
+  id: '/wallets',
+  path: '/wallets',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PricingRoute = PricingRouteImport.update({
+  id: '/pricing',
+  path: '/pricing',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IntelRoute = IntelRouteImport.update({
+  id: '/intel',
+  path: '/intel',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuditRoute = AuditRouteImport.update({
+  id: '/audit',
+  path: '/audit',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AlertsRoute = AlertsRouteImport.update({
+  id: '/alerts',
+  path: '/alerts',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -37,45 +67,128 @@ const ApiWebhooksHeliusRoute = ApiWebhooksHeliusRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/alerts': typeof AlertsRoute
+  '/audit': typeof AuditRoute
+  '/intel': typeof IntelRoute
+  '/pricing': typeof PricingRoute
   '/settings': typeof SettingsRoute
+  '/wallets': typeof WalletsRoute
   '/api/events': typeof ApiEventsRoute
   '/api/webhooks/helius': typeof ApiWebhooksHeliusRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/alerts': typeof AlertsRoute
+  '/audit': typeof AuditRoute
+  '/intel': typeof IntelRoute
+  '/pricing': typeof PricingRoute
   '/settings': typeof SettingsRoute
+  '/wallets': typeof WalletsRoute
   '/api/events': typeof ApiEventsRoute
   '/api/webhooks/helius': typeof ApiWebhooksHeliusRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/alerts': typeof AlertsRoute
+  '/audit': typeof AuditRoute
+  '/intel': typeof IntelRoute
+  '/pricing': typeof PricingRoute
   '/settings': typeof SettingsRoute
+  '/wallets': typeof WalletsRoute
   '/api/events': typeof ApiEventsRoute
   '/api/webhooks/helius': typeof ApiWebhooksHeliusRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/settings' | '/api/events' | '/api/webhooks/helius'
+  fullPaths:
+    | '/'
+    | '/alerts'
+    | '/audit'
+    | '/intel'
+    | '/pricing'
+    | '/settings'
+    | '/wallets'
+    | '/api/events'
+    | '/api/webhooks/helius'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/settings' | '/api/events' | '/api/webhooks/helius'
-  id: '__root__' | '/' | '/settings' | '/api/events' | '/api/webhooks/helius'
+  to:
+    | '/'
+    | '/alerts'
+    | '/audit'
+    | '/intel'
+    | '/pricing'
+    | '/settings'
+    | '/wallets'
+    | '/api/events'
+    | '/api/webhooks/helius'
+  id:
+    | '__root__'
+    | '/'
+    | '/alerts'
+    | '/audit'
+    | '/intel'
+    | '/pricing'
+    | '/settings'
+    | '/wallets'
+    | '/api/events'
+    | '/api/webhooks/helius'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AlertsRoute: typeof AlertsRoute
+  AuditRoute: typeof AuditRoute
+  IntelRoute: typeof IntelRoute
+  PricingRoute: typeof PricingRoute
   SettingsRoute: typeof SettingsRoute
+  WalletsRoute: typeof WalletsRoute
   ApiEventsRoute: typeof ApiEventsRoute
   ApiWebhooksHeliusRoute: typeof ApiWebhooksHeliusRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/wallets': {
+      id: '/wallets'
+      path: '/wallets'
+      fullPath: '/wallets'
+      preLoaderRoute: typeof WalletsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/settings': {
       id: '/settings'
       path: '/settings'
       fullPath: '/settings'
       preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pricing': {
+      id: '/pricing'
+      path: '/pricing'
+      fullPath: '/pricing'
+      preLoaderRoute: typeof PricingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/intel': {
+      id: '/intel'
+      path: '/intel'
+      fullPath: '/intel'
+      preLoaderRoute: typeof IntelRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/audit': {
+      id: '/audit'
+      path: '/audit'
+      fullPath: '/audit'
+      preLoaderRoute: typeof AuditRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/alerts': {
+      id: '/alerts'
+      path: '/alerts'
+      fullPath: '/alerts'
+      preLoaderRoute: typeof AlertsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -104,19 +217,15 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AlertsRoute: AlertsRoute,
+  AuditRoute: AuditRoute,
+  IntelRoute: IntelRoute,
+  PricingRoute: PricingRoute,
   SettingsRoute: SettingsRoute,
+  WalletsRoute: WalletsRoute,
   ApiEventsRoute: ApiEventsRoute,
   ApiWebhooksHeliusRoute: ApiWebhooksHeliusRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-  }
-}
