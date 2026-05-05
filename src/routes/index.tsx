@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { useSentinel } from "@/providers/SentinelProvider";
 import type { WalletStatus } from "@/components/sentinel/StatusBadge";
-import { AlertTriangle, Home, Activity, Bell, Settings } from "lucide-react";
+import { AlertTriangle, Home, Activity, Bell, Settings, Wallet, Brain, ShieldCheck, Zap } from "lucide-react";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -100,32 +100,25 @@ function Index() {
       </main>
 
       {/* Mobile bottom nav */}
-      <nav className="glass-strong fixed bottom-3 left-3 right-3 z-20 grid grid-cols-4 rounded-2xl px-2 py-2 md:hidden">
+      <nav className="glass-strong fixed bottom-3 left-3 right-3 z-20 grid grid-cols-5 rounded-2xl px-2 py-2 md:hidden">
         {[
-          { icon: Home, label: "Home" },
-          { icon: Activity, label: "Activity" },
-          { icon: Bell, label: "Alerts" },
-          { icon: Settings, label: "Settings" },
-        ].map(({ icon: Icon, label }, i) => {
-          const isSettings = label === "Settings";
-          const className = `flex flex-col items-center gap-1 rounded-xl py-2 text-[10px] uppercase tracking-wider ${
-            i === 0 ? "text-safe" : "text-muted-foreground"
-          }`;
-          if (isSettings) {
-            return (
-              <Link key={label} to="/settings" className={className}>
-                <Icon className="h-4 w-4" />
-                {label}
-              </Link>
-            );
-          }
-          return (
-            <button key={label} className={className}>
-              <Icon className="h-4 w-4" />
-              {label}
-            </button>
-          );
-        })}
+          { icon: Home, label: "Home", to: "/" },
+          { icon: Wallet, label: "Wallets", to: "/wallets" },
+          { icon: Activity, label: "Audit", to: "/audit" },
+          { icon: Bell, label: "Alerts", to: "/alerts" },
+          { icon: Settings, label: "Settings", to: "/settings" },
+        ].map(({ icon: Icon, label, to }) => (
+          <Link
+            key={label}
+            to={to}
+            activeOptions={{ exact: true }}
+            className="flex flex-col items-center gap-1 rounded-xl py-2 text-[10px] uppercase tracking-wider text-muted-foreground"
+            activeProps={{ className: "flex flex-col items-center gap-1 rounded-xl py-2 text-[10px] uppercase tracking-wider text-safe" }}
+          >
+            <Icon className="h-4 w-4" />
+            {label}
+          </Link>
+        ))}
       </nav>
 
       <AnomalyModal
