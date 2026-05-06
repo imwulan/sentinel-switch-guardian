@@ -67,7 +67,7 @@ function SettingsPage() {
         <header className="glass-strong sticky top-0 z-30 flex items-center justify-between gap-4 rounded-2xl px-5 py-4">
           <div className="flex items-center gap-3">
             <Link
-              to="/"
+              to="/app"
               className="grid h-9 w-9 place-items-center rounded-xl bg-secondary/60 text-muted-foreground transition-colors hover:text-foreground"
               aria-label="Back to dashboard"
             >
@@ -359,7 +359,7 @@ function SettingsPage() {
             Reset
           </button>
           <Link
-            to="/"
+            to="/app"
             className="rounded-xl bg-safe/15 px-5 py-2.5 text-sm font-semibold text-safe transition-colors hover:bg-safe/25"
           >
             Save & return

@@ -45,7 +45,7 @@ function WalletsPage() {
         <Header status="normal" wallet={selectedWallet ?? "No wallet connected"} />
 
         <div className="flex items-center justify-between">
-          <Link to="/" className="inline-flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground">
+          <Link to="/app" className="inline-flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground">
             <ArrowLeft className="h-3.5 w-3.5" /> Back to dashboard
           </Link>
           <button className="inline-flex items-center gap-2 rounded-xl bg-safe/15 px-4 py-2 text-xs font-semibold text-safe hover:bg-safe/25">
@@ -64,7 +64,7 @@ function WalletsPage() {
           {MOCK.map((w) => {
             const Icon = kindIcon[w.kind];
             return (
-              <article key={w.address} className="glass rounded-2xl p-5">
+              <Link key={w.address} to="/wallets/$address" params={{ address: w.address }} className="glass block rounded-2xl p-5 transition-colors hover:bg-secondary/30">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
                     <div className="grid h-10 w-10 place-items-center rounded-xl bg-secondary">
@@ -94,7 +94,7 @@ function WalletsPage() {
                     </button>
                   </div>
                 </div>
-              </article>
+              </Link>
             );
           })}
         </div>

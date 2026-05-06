@@ -31,7 +31,7 @@ function IntelPage() {
       <main className="relative mx-auto max-w-5xl space-y-5 p-4 md:p-6">
         <Header status="normal" wallet={selectedWallet ?? "No wallet connected"} />
 
-        <Link to="/" className="inline-flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground">
+        <Link to="/app" className="inline-flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground">
           <ArrowLeft className="h-3.5 w-3.5" /> Back
         </Link>
 

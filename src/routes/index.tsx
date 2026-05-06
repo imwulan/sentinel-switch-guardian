@@ -1,367 +1,302 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
-import { Header } from "@/components/sentinel/Header";
-import { BehaviorPanel } from "@/components/sentinel/BehaviorPanel";
-import { ActivityFeed } from "@/components/sentinel/ActivityFeed";
-import { SecurityPanel } from "@/components/sentinel/SecurityPanel";
-import { AnomalyModal } from "@/components/sentinel/AnomalyModal";
-import { Textarea } from "@/components/ui/textarea";
-import { toast } from "sonner";
-import { useSentinel } from "@/providers/SentinelProvider";
-import type { WalletStatus } from "@/components/sentinel/StatusBadge";
-import { AlertTriangle, Home, Activity, Bell, Settings, Wallet, Brain, ShieldCheck, Zap } from "lucide-react";
+import {
+  Shield, ShieldCheck, Brain, Zap, Activity, Lock, Eye, AlertTriangle,
+  ArrowRight, Check, Sparkles, Github, Twitter,
+} from "lucide-react";
 
 export const Route = createFileRoute("/")({
-  component: Index,
+  component: Landing,
   head: () => ({
     meta: [
       { title: "Sentinel Switch — Behavioral AI Firewall on Solana" },
       {
         name: "description",
         content:
-          "Sentinel Switch is a behavioral AI firewall for Solana wallets. Real-time anomaly detection, kill-switch protection, and on-chain trust.",
+          "Stop drainers before they drain. Sentinel Switch learns how you move on-chain and freezes anything that doesn't fit. One tap to approve. One tap to kill.",
       },
+      { property: "og:title", content: "Sentinel Switch — Behavioral AI Firewall on Solana" },
+      { property: "og:description", content: "AI-powered behavioral firewall for Solana wallets." },
     ],
   }),
 });
 
-function Index() {
-  const { selectedWallet, events, settings, simulate } = useSentinel();
-  const [open, setOpen] = useState(false);
-  const [txToSimulate, setTxToSimulate] = useState("");
-  const [simState, setSimState] = useState<"idle" | "loading" | "done">("idle");
-  const [simSummary, setSimSummary] = useState<string>("");
-
-  const status = useMemo<WalletStatus>(() => {
-    if (events.some((e) => e.risk === "high")) return "threat";
-    if (events.some((e) => e.risk === "medium")) return "suspicious";
-    return "normal";
-  }, [events]);
-
-  const trigger = () => {
-    setOpen(true);
-  };
-  const onApprove = () => {
-    setOpen(false);
-  };
-  const onKill = () => {
-    setOpen(false);
-  };
-
-  const runSimulation = async () => {
-    if (!txToSimulate.trim()) {
-      toast.error("Paste a base64 transaction first");
-      return;
-    }
-    setSimState("loading");
-    const result = await simulate(txToSimulate.trim());
-    setSimState("done");
-    if (!result.ok) {
-      const reason = result.error ?? "Unknown simulation error";
-      setSimSummary(`Simulation failed: ${reason}`);
-      toast.error("Simulation failed");
-      return;
-    }
-    const lines = result.logs.slice(-3).join(" | ");
-    setSimSummary(`Simulation passed. Logs: ${lines || "No logs."}`);
-    toast.success("Simulation completed");
-  };
-
+function Landing() {
   return (
-    <div className="min-h-screen pb-24 md:pb-8">
-      {/* ambient grid */}
-      <div className="pointer-events-none fixed inset-0 grid-bg opacity-40" />
+    <div className="min-h-screen overflow-hidden">
+      <div className="pointer-events-none fixed inset-0 grid-bg opacity-30" />
 
-      <main className="relative mx-auto max-w-7xl space-y-5 p-4 md:p-6">
-        <Header
-          status={status}
-          wallet={selectedWallet ?? "No wallet connected"}
-        />
+      <Nav />
 
-        <SubNav />
-
-        <Hero onTrigger={trigger} status={status} />
-
-        <ThreatTicker />
-
-        <div className="grid gap-5 lg:grid-cols-3">
-          <div className="space-y-5 lg:col-span-2">
-            <AIScoreCard status={status} />
-            <BehaviorPanel />
-            <ActivityFeed items={events} />
-          </div>
-          <div className="space-y-5">
-            <SecurityPanel events={events} />
-            <SimulationCard
-              onSimulate={runSimulation}
-              value={txToSimulate}
-              onChange={setTxToSimulate}
-              status={simState}
-              summary={simSummary}
-            />
-            <SwitchCard onTrigger={trigger} />
-          </div>
-        </div>
+      <main className="relative mx-auto max-w-6xl px-4 md:px-6">
+        <Hero />
+        <Logos />
+        <Stats />
+        <Features />
+        <HowItWorks />
+        <Testimonials />
+        <PricingTeaser />
+        <CTA />
       </main>
 
-      {/* Mobile bottom nav */}
-      <nav className="glass-strong fixed bottom-3 left-3 right-3 z-20 grid grid-cols-5 rounded-2xl px-2 py-2 md:hidden">
-        {[
-          { icon: Home, label: "Home", to: "/" },
-          { icon: Wallet, label: "Wallets", to: "/wallets" },
-          { icon: Activity, label: "Audit", to: "/audit" },
-          { icon: Bell, label: "Alerts", to: "/alerts" },
-          { icon: Settings, label: "Settings", to: "/settings" },
-        ].map(({ icon: Icon, label, to }) => (
-          <Link
-            key={label}
-            to={to}
-            activeOptions={{ exact: true }}
-            className="flex flex-col items-center gap-1 rounded-xl py-2 text-[10px] uppercase tracking-wider text-muted-foreground"
-            activeProps={{ className: "flex flex-col items-center gap-1 rounded-xl py-2 text-[10px] uppercase tracking-wider text-safe" }}
-          >
-            <Icon className="h-4 w-4" />
-            {label}
-          </Link>
-        ))}
-      </nav>
-
-      <AnomalyModal
-        open={open}
-        countdown={settings.countdown}
-        onApprove={onApprove}
-        onKill={onKill}
-        onClose={() => setOpen(false)}
-      />
+      <Footer />
     </div>
   );
 }
 
-function SimulationCard({
-  value,
-  onChange,
-  onSimulate,
-  status,
-  summary,
-}: {
-  value: string;
-  onChange: (next: string) => void;
-  onSimulate: () => void;
-  status: "idle" | "loading" | "done";
-  summary: string;
-}) {
+function Nav() {
   return (
-    <section className="glass rounded-2xl p-6">
-      <h2 className="mb-1 text-sm font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-        Pre-sign simulation
-      </h2>
-      <p className="mb-4 text-xs text-muted-foreground">
-        Paste a base64 Solana transaction to dry-run before signing.
-      </p>
-      <Textarea
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder="AQAAAAAAAAAAAA..."
-        className="mb-3 min-h-20 font-mono text-xs"
-      />
-      <button
-        onClick={onSimulate}
-        className="rounded-xl bg-safe/15 px-4 py-2 text-xs font-semibold text-safe hover:bg-safe/25"
-      >
-        {status === "loading" ? "Simulating..." : "Run simulation"}
-      </button>
-      {summary ? <p className="mt-3 text-xs text-muted-foreground">{summary}</p> : null}
-    </section>
-  );
-}
-
-function Hero({ onTrigger, status }: { onTrigger: () => void; status: WalletStatus }) {
-  return (
-    <section className="glass relative overflow-hidden rounded-3xl p-7 md:p-10 scanline">
-      <div className="relative z-10 grid items-center gap-6 md:grid-cols-[1.4fr_1fr]">
-        <div>
-          <p className="mb-3 inline-flex items-center gap-2 rounded-full border border-safe/30 bg-safe/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-safe">
-            <span className="h-1.5 w-1.5 rounded-full bg-safe ticker" />
-            Guardian online
-          </p>
-          <h2 className="text-3xl font-semibold leading-tight tracking-tight md:text-5xl">
-            Your wallet, <span className="text-safe">watched</span> by an AI that
-            learns how <em className="not-italic text-foreground/80">you</em> move.
-          </h2>
-          <p className="mt-4 max-w-xl text-sm text-muted-foreground md:text-base">
-            Sentinel Switch builds a behavioral fingerprint of your on-chain activity and freezes
-            anything that doesn't fit. One tap to approve. One tap to kill.
-          </p>
-
-          <div className="mt-6 flex flex-wrap items-center gap-3">
-            <button
-              onClick={onTrigger}
-              className="group inline-flex items-center gap-2 rounded-xl bg-threat px-5 py-3 text-sm font-bold uppercase tracking-wider text-white glow-threat transition-transform hover:scale-[1.03]"
-            >
-              <AlertTriangle className="h-4 w-4" />
-              Simulate threat
-            </button>
-            <button className="rounded-xl border border-border bg-secondary/60 px-5 py-3 text-sm font-medium text-foreground/90 transition-colors hover:bg-secondary">
-              View baseline
-            </button>
+    <header className="relative z-30">
+      <div className="glass-strong mx-auto mt-4 flex max-w-6xl items-center justify-between rounded-2xl px-5 py-3">
+        <Link to="/" className="flex items-center gap-2.5">
+          <div className="grid h-9 w-9 place-items-center rounded-xl bg-secondary glow-safe">
+            <Shield className="h-4 w-4 text-safe" strokeWidth={2.4} />
           </div>
-        </div>
-
-        <div className="relative grid place-items-center">
-          <div className="absolute h-56 w-56 rounded-full bg-safe/10 blur-3xl" />
-          <div className="relative grid h-44 w-44 place-items-center rounded-full border border-safe/30 bg-secondary/40 glow-safe pulse-safe">
-            <div className="grid h-32 w-32 place-items-center rounded-full bg-background/60 backdrop-blur">
-              <div className="text-center">
-                <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
-                  Status
-                </p>
-                <p className={`mt-1 text-lg font-bold ${status === "threat" ? "text-threat" : status === "suspicious" ? "text-warn" : "text-safe"}`}>
-                  {status === "threat" ? "Threat" : status === "suspicious" ? "Suspicious" : "Secured"}
-                </p>
-                <p className="mt-1 font-mono text-[10px] text-muted-foreground">SOL · mainnet</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function SwitchCard({ onTrigger }: { onTrigger: () => void }) {
-  return (
-    <section className="glass rounded-2xl p-6">
-      <h2 className="mb-1 text-sm font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-        The Switch
-      </h2>
-      <p className="mb-5 text-xs text-muted-foreground">
-        Manual override for the next pending transaction.
-      </p>
-
-      <div className="grid gap-3">
-        <button className="group rounded-xl border border-safe/30 bg-safe/10 px-4 py-3.5 text-sm font-semibold text-safe transition-all hover:bg-safe/20 hover:glow-safe">
-          ✓ Approve next action
-        </button>
-        <button
-          onClick={onTrigger}
-          className="rounded-xl bg-threat px-4 py-3.5 text-sm font-bold uppercase tracking-wide text-white glow-threat transition-transform hover:scale-[1.02]"
-        >
-          ⛔ Kill Process
-        </button>
-      </div>
-
-      <p className="mt-4 text-[11px] leading-relaxed text-muted-foreground">
-        If no decision is made within the countdown, Sentinel Switch will auto-block the
-        transaction by default.
-      </p>
-    </section>
-  );
-}
-
-function SubNav() {
-  const items = [
-    { to: "/", label: "Dashboard", icon: Home },
-    { to: "/wallets", label: "Wallets", icon: Wallet },
-    { to: "/intel", label: "Threat intel", icon: Brain },
-    { to: "/audit", label: "Audit log", icon: Activity },
-    { to: "/alerts", label: "Alerts", icon: Bell },
-    { to: "/pricing", label: "Pricing", icon: Zap },
-    { to: "/settings", label: "Settings", icon: Settings },
-  ];
-  return (
-    <nav className="hidden md:block">
-      <div className="glass flex flex-wrap gap-1 rounded-2xl p-1.5">
-        {items.map(({ to, label, icon: Icon }) => (
-          <Link
-            key={to}
-            to={to}
-            activeOptions={{ exact: true }}
-            className="inline-flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-medium text-muted-foreground hover:bg-secondary/60 hover:text-foreground"
-            activeProps={{ className: "inline-flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-medium bg-safe/15 text-safe" }}
-          >
-            <Icon className="h-3.5 w-3.5" />
-            {label}
+          <span className="font-semibold tracking-tight">Sentinel Switch</span>
+        </Link>
+        <nav className="hidden gap-6 text-sm text-muted-foreground md:flex">
+          <a href="#features" className="hover:text-foreground">Features</a>
+          <a href="#how" className="hover:text-foreground">How it works</a>
+          <Link to="/pricing" className="hover:text-foreground">Pricing</Link>
+          <Link to="/intel" className="hover:text-foreground">Threat intel</Link>
+        </nav>
+        <div className="flex items-center gap-2">
+          <Link to="/onboarding" className="hidden rounded-xl border border-border bg-secondary/60 px-3 py-1.5 text-xs font-medium hover:bg-secondary md:inline-flex">
+            Get started
           </Link>
-        ))}
+          <Link to="/app" className="inline-flex items-center gap-1.5 rounded-xl bg-safe/15 px-3 py-1.5 text-xs font-semibold text-safe hover:bg-safe/25">
+            Launch app <ArrowRight className="h-3 w-3" />
+          </Link>
+        </div>
       </div>
-    </nav>
+    </header>
   );
 }
 
-function ThreatTicker() {
-  const items = [
-    "🚨 Drainer cluster active — 12 wallets compromised in the last hour",
-    "⚠️ Program Pdr…7Xa2 flagged as malicious (98% confidence)",
-    "🛡 23,901 wallets currently protected by Sentinel",
-    "🔥 $RUGME token confirmed honeypot — 100% buy tax",
-  ];
+function Hero() {
   return (
-    <div className="glass overflow-hidden rounded-2xl">
-      <div className="flex animate-[marquee_40s_linear_infinite] gap-12 whitespace-nowrap px-4 py-2.5 text-xs text-muted-foreground">
-        {[...items, ...items].map((t, i) => (
-          <span key={i} className="inline-flex items-center gap-2">
-            <ShieldCheck className="h-3.5 w-3.5 text-safe" />
-            {t}
-          </span>
-        ))}
+    <section className="relative pt-20 pb-24 text-center md:pt-28 md:pb-32">
+      <div className="absolute left-1/2 top-10 -z-10 h-72 w-72 -translate-x-1/2 rounded-full bg-safe/10 blur-[120px]" />
+      <p className="mx-auto mb-6 inline-flex items-center gap-2 rounded-full border border-safe/30 bg-safe/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-safe">
+        <Sparkles className="h-3 w-3" />
+        Live on Solana mainnet
+      </p>
+      <h1 className="mx-auto max-w-4xl text-4xl font-semibold leading-[1.05] tracking-tight md:text-6xl lg:text-7xl">
+        Stop drainers before <br className="hidden md:inline" />
+        they <span className="text-threat">drain</span>.
+      </h1>
+      <p className="mx-auto mt-6 max-w-2xl text-base text-muted-foreground md:text-lg">
+        Sentinel Switch is a behavioral AI firewall for Solana wallets. It learns how you move,
+        watches every transaction, and freezes anything suspicious — before you sign.
+      </p>
+      <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
+        <Link to="/onboarding" className="inline-flex items-center gap-2 rounded-xl bg-safe px-6 py-3.5 text-sm font-bold uppercase tracking-wider text-background glow-safe transition-transform hover:scale-[1.03]">
+          Protect my wallet <ArrowRight className="h-4 w-4" />
+        </Link>
+        <Link to="/app" className="rounded-xl border border-border bg-secondary/60 px-6 py-3.5 text-sm font-medium hover:bg-secondary">
+          See live dashboard
+        </Link>
       </div>
-    </div>
+      <p className="mt-5 font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
+        Free during beta · Non-custodial · Open source
+      </p>
+    </section>
   );
 }
 
-function AIScoreCard({ status }: { status: WalletStatus }) {
-  const score = status === "threat" ? 88 : status === "suspicious" ? 52 : 14;
-  const color = score >= 70 ? "text-threat" : score >= 35 ? "text-warn" : "text-safe";
-  const ring = score >= 70 ? "stroke-threat" : score >= 35 ? "stroke-warn" : "stroke-safe";
-  const offset = 264 - (264 * score) / 100;
+function Logos() {
   return (
-    <section className="glass rounded-2xl p-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-sm font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-            Live AI risk score
-          </h2>
-          <p className="mt-1 text-xs text-muted-foreground">
-            Composite of 142 behavioral, on-chain, and intel signals.
-          </p>
-        </div>
-        <Brain className="h-5 w-5 text-safe" />
-      </div>
-
-      <div className="mt-6 grid grid-cols-[auto_1fr] items-center gap-6">
-        <div className="relative h-28 w-28">
-          <svg viewBox="0 0 100 100" className="h-full w-full -rotate-90">
-            <circle cx="50" cy="50" r="42" strokeWidth="8" className="stroke-secondary" fill="none" />
-            <circle
-              cx="50" cy="50" r="42" strokeWidth="8" fill="none"
-              strokeLinecap="round"
-              className={ring}
-              strokeDasharray="264"
-              strokeDashoffset={offset}
-            />
-          </svg>
-          <div className="absolute inset-0 grid place-items-center">
-            <div className="text-center">
-              <p className={`font-mono text-2xl font-bold ${color}`}>{score}</p>
-              <p className="text-[10px] uppercase tracking-wider text-muted-foreground">/ 100</p>
-            </div>
-          </div>
-        </div>
-
-        <ul className="space-y-2 text-xs">
-          {[
-            { l: "Behavioral fit", v: status === "threat" ? "Off-baseline" : "Matches baseline", c: status === "threat" ? "text-threat" : "text-safe" },
-            { l: "Counterparty trust", v: status === "threat" ? "Unknown program" : "Allowlisted", c: status === "threat" ? "text-warn" : "text-safe" },
-            { l: "Velocity", v: "Within normal", c: "text-safe" },
-            { l: "Intel match", v: status === "threat" ? "Drainer signature" : "Clean", c: status === "threat" ? "text-threat" : "text-safe" },
-          ].map((s) => (
-            <li key={s.l} className="flex items-center justify-between rounded-lg bg-secondary/40 px-3 py-1.5">
-              <span className="text-muted-foreground">{s.l}</span>
-              <span className={`font-medium ${s.c}`}>{s.v}</span>
-            </li>
-          ))}
-        </ul>
+    <section className="border-y border-border/50 py-8">
+      <p className="mb-5 text-center text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
+        Trusted by wallets, DAOs and traders across
+      </p>
+      <div className="flex flex-wrap items-center justify-center gap-x-10 gap-y-4 font-mono text-sm text-muted-foreground/70">
+        <span>Phantom</span>
+        <span>Solflare</span>
+        <span>Backpack</span>
+        <span>Jupiter</span>
+        <span>Tensor</span>
+        <span>Marginfi</span>
       </div>
     </section>
+  );
+}
+
+function Stats() {
+  const stats = [
+    { v: "23,901", l: "Wallets protected" },
+    { v: "$48.2M", l: "Threats blocked" },
+    { v: "142", l: "Behavioral signals" },
+    { v: "<400ms", l: "Decision latency" },
+  ];
+  return (
+    <section className="grid grid-cols-2 gap-3 py-14 md:grid-cols-4">
+      {stats.map((s) => (
+        <div key={s.l} className="glass rounded-2xl p-5 text-center">
+          <p className="font-mono text-2xl font-bold text-safe md:text-3xl">{s.v}</p>
+          <p className="mt-1 text-[11px] uppercase tracking-wider text-muted-foreground">{s.l}</p>
+        </div>
+      ))}
+    </section>
+  );
+}
+
+function Features() {
+  const items = [
+    { icon: Brain, title: "Behavioral fingerprint", desc: "An AI baseline of your on-chain habits — counterparties, sizes, timing, programs." },
+    { icon: AlertTriangle, title: "Anomaly detection", desc: "Real-time scoring catches drainers, phishing approvals, and impostor programs." },
+    { icon: Lock, title: "Pre-sign simulation", desc: "Every transaction is dry-run before you sign. See balance deltas, not blind hashes." },
+    { icon: Zap, title: "Kill Switch", desc: "One tap freezes all activity. Auto-block by default if you don't decide in time." },
+    { icon: Eye, title: "Threat intel network", desc: "Community-flagged programs, drainer clusters, and honeypots — updated live." },
+    { icon: Activity, title: "Audit-ready logs", desc: "Every Sentinel decision exported with full reasoning, scores and confidence." },
+  ];
+  return (
+    <section id="features" className="py-20">
+      <div className="mb-12 text-center">
+        <p className="mb-3 text-[11px] uppercase tracking-[0.2em] text-safe">Features</p>
+        <h2 className="text-3xl font-semibold tracking-tight md:text-5xl">A guardian, not a gate.</h2>
+        <p className="mx-auto mt-3 max-w-xl text-sm text-muted-foreground">
+          Sentinel Switch never holds your keys. It just stands watch and gives you the kill switch.
+        </p>
+      </div>
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {items.map(({ icon: Icon, title, desc }) => (
+          <article key={title} className="glass rounded-2xl p-6 transition-colors hover:bg-secondary/30">
+            <div className="mb-4 grid h-10 w-10 place-items-center rounded-xl bg-safe/10 text-safe">
+              <Icon className="h-5 w-5" />
+            </div>
+            <h3 className="text-base font-semibold">{title}</h3>
+            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{desc}</p>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function HowItWorks() {
+  const steps = [
+    { n: "01", t: "Connect", d: "Link your wallet read-only. We never touch your keys or signing flow." },
+    { n: "02", t: "Learn", d: "Sentinel observes 7 days of activity to build your behavioral baseline." },
+    { n: "03", t: "Watch", d: "Every new transaction is scored against 142 signals in under 400ms." },
+    { n: "04", t: "Decide", d: "Approve, kill, or let auto-block trigger. You stay in control, always." },
+  ];
+  return (
+    <section id="how" className="py-20">
+      <div className="mb-12 text-center">
+        <p className="mb-3 text-[11px] uppercase tracking-[0.2em] text-safe">How it works</p>
+        <h2 className="text-3xl font-semibold tracking-tight md:text-5xl">Set up in 60 seconds.</h2>
+      </div>
+      <div className="grid gap-4 md:grid-cols-4">
+        {steps.map((s) => (
+          <div key={s.n} className="glass rounded-2xl p-6">
+            <p className="font-mono text-3xl font-bold text-safe/80">{s.n}</p>
+            <h3 className="mt-3 text-base font-semibold">{s.t}</h3>
+            <p className="mt-2 text-sm text-muted-foreground">{s.d}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function Testimonials() {
+  const quotes = [
+    { q: "Sentinel caught a fake Jupiter program before I signed. Saved me 14 SOL.", a: "@degen.sol", r: "Trader" },
+    { q: "We route every treasury proposal through Sentinel now. Non-negotiable.", a: "Ops Lead", r: "DAO" },
+    { q: "Finally a wallet guard that learns me instead of asking 'are you sure?'.", a: "@cryptojen", r: "Builder" },
+  ];
+  return (
+    <section className="py-20">
+      <div className="grid gap-4 md:grid-cols-3">
+        {quotes.map((q) => (
+          <figure key={q.a} className="glass rounded-2xl p-6">
+            <ShieldCheck className="h-5 w-5 text-safe" />
+            <blockquote className="mt-4 text-sm leading-relaxed text-foreground/90">"{q.q}"</blockquote>
+            <figcaption className="mt-4 text-xs text-muted-foreground">
+              <span className="font-semibold text-foreground">{q.a}</span> · {q.r}
+            </figcaption>
+          </figure>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function PricingTeaser() {
+  const tiers = [
+    { name: "Guardian", price: "Free", items: ["1 wallet", "Behavioral baseline", "Pre-sign simulation"] },
+    { name: "Pro", price: "$9/mo", items: ["10 wallets", "Threat intel feed", "Webhooks & Telegram"], featured: true },
+    { name: "Teams", price: "Custom", items: ["Multisig & treasury", "Role-based access", "Priority signers"] },
+  ];
+  return (
+    <section className="py-20">
+      <div className="mb-10 text-center">
+        <p className="mb-3 text-[11px] uppercase tracking-[0.2em] text-safe">Pricing</p>
+        <h2 className="text-3xl font-semibold tracking-tight md:text-4xl">Free forever for solo wallets.</h2>
+      </div>
+      <div className="grid gap-4 md:grid-cols-3">
+        {tiers.map((t) => (
+          <div key={t.name} className={`glass rounded-2xl p-6 ${t.featured ? "border border-safe/40 glow-safe" : ""}`}>
+            <p className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">{t.name}</p>
+            <p className="mt-2 text-3xl font-bold tracking-tight">{t.price}</p>
+            <ul className="mt-5 space-y-2 text-sm">
+              {t.items.map((i) => (
+                <li key={i} className="flex items-center gap-2 text-muted-foreground">
+                  <Check className="h-3.5 w-3.5 text-safe" /> {i}
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </div>
+      <div className="mt-8 text-center">
+        <Link to="/pricing" className="inline-flex items-center gap-1.5 text-sm font-medium text-safe hover:underline">
+          Compare all plans <ArrowRight className="h-3.5 w-3.5" />
+        </Link>
+      </div>
+    </section>
+  );
+}
+
+function CTA() {
+  return (
+    <section className="py-20">
+      <div className="glass relative overflow-hidden rounded-3xl p-10 text-center scanline md:p-16">
+        <div className="absolute left-1/2 top-0 -z-10 h-64 w-64 -translate-x-1/2 rounded-full bg-threat/20 blur-[100px]" />
+        <h2 className="mx-auto max-w-2xl text-3xl font-semibold tracking-tight md:text-5xl">
+          Your next signature could cost you everything.
+        </h2>
+        <p className="mx-auto mt-4 max-w-lg text-sm text-muted-foreground md:text-base">
+          Or it could cost you nothing — because Sentinel was watching.
+        </p>
+        <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+          <Link to="/onboarding" className="inline-flex items-center gap-2 rounded-xl bg-safe px-6 py-3.5 text-sm font-bold uppercase tracking-wider text-background glow-safe transition-transform hover:scale-[1.03]">
+            Activate Sentinel <ArrowRight className="h-4 w-4" />
+          </Link>
+          <Link to="/app" className="rounded-xl border border-border bg-secondary/60 px-6 py-3.5 text-sm font-medium hover:bg-secondary">
+            Open dashboard
+          </Link>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function Footer() {
+  return (
+    <footer className="relative mx-auto mt-12 max-w-6xl px-4 pb-10 md:px-6">
+      <div className="glass flex flex-col items-center justify-between gap-4 rounded-2xl px-6 py-5 text-xs text-muted-foreground md:flex-row">
+        <div className="flex items-center gap-2">
+          <Shield className="h-3.5 w-3.5 text-safe" />
+          <span>© 2026 Sentinel Switch · Built on Solana</span>
+        </div>
+        <div className="flex items-center gap-5">
+          <Link to="/intel" className="hover:text-foreground">Threat intel</Link>
+          <Link to="/pricing" className="hover:text-foreground">Pricing</Link>
+          <a href="#" className="hover:text-foreground" aria-label="Twitter"><Twitter className="h-3.5 w-3.5" /></a>
+          <a href="#" className="hover:text-foreground" aria-label="GitHub"><Github className="h-3.5 w-3.5" /></a>
+        </div>
+      </div>
+    </footer>
   );
 }
