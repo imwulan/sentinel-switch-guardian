@@ -12,10 +12,13 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as WalletsRouteImport } from './routes/wallets'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as PricingRouteImport } from './routes/pricing'
+import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as IntelRouteImport } from './routes/intel'
 import { Route as AuditRouteImport } from './routes/audit'
+import { Route as AppRouteImport } from './routes/app'
 import { Route as AlertsRouteImport } from './routes/alerts'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as WalletsAddressRouteImport } from './routes/wallets.$address'
 import { Route as ApiEventsRouteImport } from './routes/api/events'
 import { Route as ApiWebhooksHeliusRouteImport } from './routes/api/webhooks/helius'
 
@@ -34,6 +37,11 @@ const PricingRoute = PricingRouteImport.update({
   path: '/pricing',
   getParentRoute: () => rootRouteImport,
 } as any)
+const OnboardingRoute = OnboardingRouteImport.update({
+  id: '/onboarding',
+  path: '/onboarding',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IntelRoute = IntelRouteImport.update({
   id: '/intel',
   path: '/intel',
@@ -42,6 +50,11 @@ const IntelRoute = IntelRouteImport.update({
 const AuditRoute = AuditRouteImport.update({
   id: '/audit',
   path: '/audit',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppRoute = AppRouteImport.update({
+  id: '/app',
+  path: '/app',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AlertsRoute = AlertsRouteImport.update({
@@ -53,6 +66,11 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const WalletsAddressRoute = WalletsAddressRouteImport.update({
+  id: '/$address',
+  path: '/$address',
+  getParentRoute: () => WalletsRoute,
 } as any)
 const ApiEventsRoute = ApiEventsRouteImport.update({
   id: '/api/events',
@@ -68,35 +86,44 @@ const ApiWebhooksHeliusRoute = ApiWebhooksHeliusRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/alerts': typeof AlertsRoute
+  '/app': typeof AppRoute
   '/audit': typeof AuditRoute
   '/intel': typeof IntelRoute
+  '/onboarding': typeof OnboardingRoute
   '/pricing': typeof PricingRoute
   '/settings': typeof SettingsRoute
-  '/wallets': typeof WalletsRoute
+  '/wallets': typeof WalletsRouteWithChildren
   '/api/events': typeof ApiEventsRoute
+  '/wallets/$address': typeof WalletsAddressRoute
   '/api/webhooks/helius': typeof ApiWebhooksHeliusRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/alerts': typeof AlertsRoute
+  '/app': typeof AppRoute
   '/audit': typeof AuditRoute
   '/intel': typeof IntelRoute
+  '/onboarding': typeof OnboardingRoute
   '/pricing': typeof PricingRoute
   '/settings': typeof SettingsRoute
-  '/wallets': typeof WalletsRoute
+  '/wallets': typeof WalletsRouteWithChildren
   '/api/events': typeof ApiEventsRoute
+  '/wallets/$address': typeof WalletsAddressRoute
   '/api/webhooks/helius': typeof ApiWebhooksHeliusRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/alerts': typeof AlertsRoute
+  '/app': typeof AppRoute
   '/audit': typeof AuditRoute
   '/intel': typeof IntelRoute
+  '/onboarding': typeof OnboardingRoute
   '/pricing': typeof PricingRoute
   '/settings': typeof SettingsRoute
-  '/wallets': typeof WalletsRoute
+  '/wallets': typeof WalletsRouteWithChildren
   '/api/events': typeof ApiEventsRoute
+  '/wallets/$address': typeof WalletsAddressRoute
   '/api/webhooks/helius': typeof ApiWebhooksHeliusRoute
 }
 export interface FileRouteTypes {
@@ -104,45 +131,56 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/alerts'
+    | '/app'
     | '/audit'
     | '/intel'
+    | '/onboarding'
     | '/pricing'
     | '/settings'
     | '/wallets'
     | '/api/events'
+    | '/wallets/$address'
     | '/api/webhooks/helius'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/alerts'
+    | '/app'
     | '/audit'
     | '/intel'
+    | '/onboarding'
     | '/pricing'
     | '/settings'
     | '/wallets'
     | '/api/events'
+    | '/wallets/$address'
     | '/api/webhooks/helius'
   id:
     | '__root__'
     | '/'
     | '/alerts'
+    | '/app'
     | '/audit'
     | '/intel'
+    | '/onboarding'
     | '/pricing'
     | '/settings'
     | '/wallets'
     | '/api/events'
+    | '/wallets/$address'
     | '/api/webhooks/helius'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AlertsRoute: typeof AlertsRoute
+  AppRoute: typeof AppRoute
   AuditRoute: typeof AuditRoute
   IntelRoute: typeof IntelRoute
+  OnboardingRoute: typeof OnboardingRoute
   PricingRoute: typeof PricingRoute
   SettingsRoute: typeof SettingsRoute
-  WalletsRoute: typeof WalletsRoute
+  WalletsRoute: typeof WalletsRouteWithChildren
   ApiEventsRoute: typeof ApiEventsRoute
   ApiWebhooksHeliusRoute: typeof ApiWebhooksHeliusRoute
 }
@@ -170,6 +208,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PricingRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/onboarding': {
+      id: '/onboarding'
+      path: '/onboarding'
+      fullPath: '/onboarding'
+      preLoaderRoute: typeof OnboardingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/intel': {
       id: '/intel'
       path: '/intel'
@@ -182,6 +227,13 @@ declare module '@tanstack/react-router' {
       path: '/audit'
       fullPath: '/audit'
       preLoaderRoute: typeof AuditRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/app': {
+      id: '/app'
+      path: '/app'
+      fullPath: '/app'
+      preLoaderRoute: typeof AppRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/alerts': {
@@ -197,6 +249,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/wallets/$address': {
+      id: '/wallets/$address'
+      path: '/$address'
+      fullPath: '/wallets/$address'
+      preLoaderRoute: typeof WalletsAddressRouteImport
+      parentRoute: typeof WalletsRoute
     }
     '/api/events': {
       id: '/api/events'
@@ -215,14 +274,27 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface WalletsRouteChildren {
+  WalletsAddressRoute: typeof WalletsAddressRoute
+}
+
+const WalletsRouteChildren: WalletsRouteChildren = {
+  WalletsAddressRoute: WalletsAddressRoute,
+}
+
+const WalletsRouteWithChildren =
+  WalletsRoute._addFileChildren(WalletsRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AlertsRoute: AlertsRoute,
+  AppRoute: AppRoute,
   AuditRoute: AuditRoute,
   IntelRoute: IntelRoute,
+  OnboardingRoute: OnboardingRoute,
   PricingRoute: PricingRoute,
   SettingsRoute: SettingsRoute,
-  WalletsRoute: WalletsRoute,
+  WalletsRoute: WalletsRouteWithChildren,
   ApiEventsRoute: ApiEventsRoute,
   ApiWebhooksHeliusRoute: ApiWebhooksHeliusRoute,
 }
