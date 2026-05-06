@@ -47,6 +47,12 @@ export const Route = createRootRoute({
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "Sentinel Switch — Behavioral AI Firewall on Solana" },
+      { name: "description", content: "Sentinel Switch UI provides a modern Web3 dashboard for a behavioral AI firewall on Solana." },
+      { property: "og:description", content: "Sentinel Switch UI provides a modern Web3 dashboard for a behavioral AI firewall on Solana." },
+      { name: "twitter:description", content: "Sentinel Switch UI provides a modern Web3 dashboard for a behavioral AI firewall on Solana." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/45e0fd50-bafa-422b-ba1a-9ea3b19002fa/id-preview-a8bb90ab--88dd3f36-23ab-4416-8088-2a44c22304b7.lovable.app-1778031445019.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/45e0fd50-bafa-422b-ba1a-9ea3b19002fa/id-preview-a8bb90ab--88dd3f36-23ab-4416-8088-2a44c22304b7.lovable.app-1778031445019.png" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
