@@ -7,6 +7,7 @@ import { SolflareWalletAdapter } from "@solana/wallet-adapter-solflare";
 import { BackpackWalletAdapter } from "@solana/wallet-adapter-backpack";
 import { fetchWalletEvents } from "@/lib/activity";
 import { loadActiveWallet, loadSettings, saveActiveWallet, saveSettings } from "@/lib/persistence";
+import { supabase } from "@/integrations/supabase/client";
 import { simulateTransaction } from "@/lib/simulation";
 import {
   DEFAULT_SETTINGS,
