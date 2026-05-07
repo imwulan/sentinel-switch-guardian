@@ -71,7 +71,7 @@ function SentinelStateProvider({ children }: { children: React.ReactNode }) {
     if (!userId) return;
     void supabase
       .from("user_settings")
-      .upsert({ user_id: userId, settings: next as unknown as Record<string, unknown> });
+      .upsert({ user_id: userId, settings: next as never });
   };
 
   const setSelectedWallet = (wallet: string | null) => {
