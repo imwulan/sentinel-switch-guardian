@@ -41,10 +41,38 @@ function SentinelStateProvider({ children }: { children: React.ReactNode }) {
   const [selectedWallet, setSelectedWalletState] = useState<string | null>(() => loadActiveWallet());
   const [events, setEvents] = useState<SentinelEvent[]>([]);
   const [settings, setSettingsState] = useState<SentinelSettings>(() => loadSettings());
+  const [userId, setUserId] = useState<string | null>(null);
 
   const connection = useMemo(() => new Connection(RPC_ENDPOINT, "confirmed"), []);
 
   const selected = connectedWallet ?? selectedWallet;
+
+  useEffect(() => {
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => setUserId(s?.user?.id ?? null));
+    supabase.auth.getSession().then(({ data }) => setUserId(data.session?.user?.id ?? null));
+    return () => sub.subscription.unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    if (!userId) return;
+    (async () => {
+      const { data } = await supabase
+        .from("user_settings")
+        .select("settings")
+        .eq("user_id", userId)
+        .maybeSingle();
+      if (data?.settings) {
+        setSettingsState((prev) => ({ ...prev, ...(data.settings as Partial<SentinelSettings>) }));
+      }
+    })();
+  }, [userId]);
+
+  const persistRemote = (next: SentinelSettings) => {
+    if (!userId) return;
+    void supabase
+      .from("user_settings")
+      .upsert({ user_id: userId, settings: next as unknown as Record<string, unknown> });
+  };
 
   const setSelectedWallet = (wallet: string | null) => {
     setSelectedWalletState(wallet);
@@ -54,18 +82,18 @@ function SentinelStateProvider({ children }: { children: React.ReactNode }) {
   const setSettings = (next: SentinelSettings) => {
     setSettingsState(next);
     saveSettings(next);
+    persistRemote(next);
   };
 
   const updateSettings = <K extends keyof SentinelSettings>(key: K, value: SentinelSettings[K]) => {
     setSettingsState((prev) => {
-      const next = {
-        ...prev,
-        [key]: value,
-      };
+      const next = { ...prev, [key]: value };
       saveSettings(next);
+      persistRemote(next);
       return next;
     });
   };
+
 
   const refreshEvents = async () => {
     if (!selected) {
