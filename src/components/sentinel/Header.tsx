@@ -1,7 +1,10 @@
-import { Shield, Copy } from "lucide-react";
+import { Shield, Copy, LogIn, LogOut } from "lucide-react";
 import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
+import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { StatusBadge, type WalletStatus } from "./StatusBadge";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 
 export function Header({ status, wallet }: { status: WalletStatus; wallet: string }) {
   const hasWallet = wallet.length > 10 && !wallet.includes(" ");
