@@ -7,12 +7,17 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 
 export function Header({ status, wallet }: { status: WalletStatus; wallet: string }) {
+  const { user } = useAuth();
   const hasWallet = wallet.length > 10 && !wallet.includes(" ");
   const short = hasWallet ? `${wallet.slice(0, 4)}…${wallet.slice(-4)}` : wallet;
   const copyWallet = async () => {
     if (!hasWallet) return;
     await navigator.clipboard.writeText(wallet);
     toast.success("Wallet copied");
+  };
+  const signOut = async () => {
+    await supabase.auth.signOut();
+    toast.success("Signed out");
   };
   return (
     <header className="glass-strong sticky top-0 z-30 flex items-center justify-between gap-4 rounded-2xl px-5 py-4">
