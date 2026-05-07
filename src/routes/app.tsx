@@ -184,6 +184,7 @@ function SubNav() {
     { to: "/intel", label: "Threat intel", icon: Brain },
     { to: "/audit", label: "Audit log", icon: Activity },
     { to: "/alerts", label: "Alerts", icon: Bell },
+    { to: "/panic", label: "Panic", icon: ShieldAlert },
     { to: "/pricing", label: "Pricing", icon: Zap },
     { to: "/settings", label: "Settings", icon: Settings },
   ];
