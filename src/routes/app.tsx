@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { useSentinel } from "@/providers/SentinelProvider";
 import type { WalletStatus } from "@/components/sentinel/StatusBadge";
-import { AlertTriangle, Home, Activity, Bell, Settings, Wallet, Brain, ShieldCheck, Zap } from "lucide-react";
+import { AlertTriangle, Home, Activity, Bell, Settings, Wallet, Brain, ShieldCheck, ShieldAlert, Zap } from "lucide-react";
 
 export const Route = createFileRoute("/app")({
   component: AppDashboard,
@@ -171,6 +171,9 @@ function SwitchCard({ onTrigger }: { onTrigger: () => void }) {
       <div className="grid gap-3">
         <button className="group rounded-xl border border-safe/30 bg-safe/10 px-4 py-3.5 text-sm font-semibold text-safe transition-all hover:bg-safe/20 hover:glow-safe">✓ Approve next action</button>
         <button onClick={onTrigger} className="rounded-xl bg-threat px-4 py-3.5 text-sm font-bold uppercase tracking-wide text-white glow-threat transition-transform hover:scale-[1.02]">⛔ Kill Process</button>
+        <Link to="/panic" className="rounded-xl border border-threat/40 bg-threat/10 px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-threat hover:bg-threat/20">
+          Panic Mode → Revoke all approvals
+        </Link>
       </div>
       <p className="mt-4 text-[11px] leading-relaxed text-muted-foreground">If no decision is made within the countdown, Sentinel Switch will auto-block the transaction by default.</p>
     </section>
@@ -184,6 +187,7 @@ function SubNav() {
     { to: "/intel", label: "Threat intel", icon: Brain },
     { to: "/audit", label: "Audit log", icon: Activity },
     { to: "/alerts", label: "Alerts", icon: Bell },
+    { to: "/panic", label: "Panic", icon: ShieldAlert },
     { to: "/pricing", label: "Pricing", icon: Zap },
     { to: "/settings", label: "Settings", icon: Settings },
   ];

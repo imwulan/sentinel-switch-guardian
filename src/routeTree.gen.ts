@@ -12,8 +12,10 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as WalletsRouteImport } from './routes/wallets'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as PricingRouteImport } from './routes/pricing'
+import { Route as PanicRouteImport } from './routes/panic'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as IntelRouteImport } from './routes/intel'
+import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuditRouteImport } from './routes/audit'
 import { Route as AppRouteImport } from './routes/app'
 import { Route as AlertsRouteImport } from './routes/alerts'
@@ -37,6 +39,11 @@ const PricingRoute = PricingRouteImport.update({
   path: '/pricing',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PanicRoute = PanicRouteImport.update({
+  id: '/panic',
+  path: '/panic',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const OnboardingRoute = OnboardingRouteImport.update({
   id: '/onboarding',
   path: '/onboarding',
@@ -45,6 +52,11 @@ const OnboardingRoute = OnboardingRouteImport.update({
 const IntelRoute = IntelRouteImport.update({
   id: '/intel',
   path: '/intel',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuditRoute = AuditRouteImport.update({
@@ -88,8 +100,10 @@ export interface FileRoutesByFullPath {
   '/alerts': typeof AlertsRoute
   '/app': typeof AppRoute
   '/audit': typeof AuditRoute
+  '/auth': typeof AuthRoute
   '/intel': typeof IntelRoute
   '/onboarding': typeof OnboardingRoute
+  '/panic': typeof PanicRoute
   '/pricing': typeof PricingRoute
   '/settings': typeof SettingsRoute
   '/wallets': typeof WalletsRouteWithChildren
@@ -102,8 +116,10 @@ export interface FileRoutesByTo {
   '/alerts': typeof AlertsRoute
   '/app': typeof AppRoute
   '/audit': typeof AuditRoute
+  '/auth': typeof AuthRoute
   '/intel': typeof IntelRoute
   '/onboarding': typeof OnboardingRoute
+  '/panic': typeof PanicRoute
   '/pricing': typeof PricingRoute
   '/settings': typeof SettingsRoute
   '/wallets': typeof WalletsRouteWithChildren
@@ -117,8 +133,10 @@ export interface FileRoutesById {
   '/alerts': typeof AlertsRoute
   '/app': typeof AppRoute
   '/audit': typeof AuditRoute
+  '/auth': typeof AuthRoute
   '/intel': typeof IntelRoute
   '/onboarding': typeof OnboardingRoute
+  '/panic': typeof PanicRoute
   '/pricing': typeof PricingRoute
   '/settings': typeof SettingsRoute
   '/wallets': typeof WalletsRouteWithChildren
@@ -133,8 +151,10 @@ export interface FileRouteTypes {
     | '/alerts'
     | '/app'
     | '/audit'
+    | '/auth'
     | '/intel'
     | '/onboarding'
+    | '/panic'
     | '/pricing'
     | '/settings'
     | '/wallets'
@@ -147,8 +167,10 @@ export interface FileRouteTypes {
     | '/alerts'
     | '/app'
     | '/audit'
+    | '/auth'
     | '/intel'
     | '/onboarding'
+    | '/panic'
     | '/pricing'
     | '/settings'
     | '/wallets'
@@ -161,8 +183,10 @@ export interface FileRouteTypes {
     | '/alerts'
     | '/app'
     | '/audit'
+    | '/auth'
     | '/intel'
     | '/onboarding'
+    | '/panic'
     | '/pricing'
     | '/settings'
     | '/wallets'
@@ -176,8 +200,10 @@ export interface RootRouteChildren {
   AlertsRoute: typeof AlertsRoute
   AppRoute: typeof AppRoute
   AuditRoute: typeof AuditRoute
+  AuthRoute: typeof AuthRoute
   IntelRoute: typeof IntelRoute
   OnboardingRoute: typeof OnboardingRoute
+  PanicRoute: typeof PanicRoute
   PricingRoute: typeof PricingRoute
   SettingsRoute: typeof SettingsRoute
   WalletsRoute: typeof WalletsRouteWithChildren
@@ -208,6 +234,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PricingRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/panic': {
+      id: '/panic'
+      path: '/panic'
+      fullPath: '/panic'
+      preLoaderRoute: typeof PanicRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/onboarding': {
       id: '/onboarding'
       path: '/onboarding'
@@ -220,6 +253,13 @@ declare module '@tanstack/react-router' {
       path: '/intel'
       fullPath: '/intel'
       preLoaderRoute: typeof IntelRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/audit': {
@@ -290,8 +330,10 @@ const rootRouteChildren: RootRouteChildren = {
   AlertsRoute: AlertsRoute,
   AppRoute: AppRoute,
   AuditRoute: AuditRoute,
+  AuthRoute: AuthRoute,
   IntelRoute: IntelRoute,
   OnboardingRoute: OnboardingRoute,
+  PanicRoute: PanicRoute,
   PricingRoute: PricingRoute,
   SettingsRoute: SettingsRoute,
   WalletsRoute: WalletsRouteWithChildren,
@@ -301,12 +343,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-  }
-}

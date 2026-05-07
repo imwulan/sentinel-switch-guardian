@@ -1,15 +1,23 @@
-import { Shield, Copy } from "lucide-react";
+import { Shield, Copy, LogIn, LogOut } from "lucide-react";
 import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
+import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { StatusBadge, type WalletStatus } from "./StatusBadge";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 
 export function Header({ status, wallet }: { status: WalletStatus; wallet: string }) {
+  const { user } = useAuth();
   const hasWallet = wallet.length > 10 && !wallet.includes(" ");
   const short = hasWallet ? `${wallet.slice(0, 4)}…${wallet.slice(-4)}` : wallet;
   const copyWallet = async () => {
     if (!hasWallet) return;
     await navigator.clipboard.writeText(wallet);
     toast.success("Wallet copied");
+  };
+  const signOut = async () => {
+    await supabase.auth.signOut();
+    toast.success("Signed out");
   };
   return (
     <header className="glass-strong sticky top-0 z-30 flex items-center justify-between gap-4 rounded-2xl px-5 py-4">
@@ -38,6 +46,24 @@ export function Header({ status, wallet }: { status: WalletStatus; wallet: strin
             onClick={copyWallet}
           />
         </div>
+        {user ? (
+          <button
+            onClick={signOut}
+            className="inline-flex items-center gap-1.5 rounded-full border border-border bg-secondary/60 px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground"
+            title={user.email ?? ""}
+          >
+            <LogOut className="h-3 w-3" />
+            Sign out
+          </button>
+        ) : (
+          <Link
+            to="/auth"
+            className="inline-flex items-center gap-1.5 rounded-full border border-safe/30 bg-safe/10 px-3 py-1.5 text-xs font-medium text-safe hover:bg-safe/20"
+          >
+            <LogIn className="h-3 w-3" />
+            Sign in
+          </Link>
+        )}
       </div>
 
       <div className="md:hidden">
