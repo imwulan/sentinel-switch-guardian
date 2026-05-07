@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as WalletsRouteImport } from './routes/wallets'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as PricingRouteImport } from './routes/pricing'
+import { Route as PanicRouteImport } from './routes/panic'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as IntelRouteImport } from './routes/intel'
 import { Route as AuthRouteImport } from './routes/auth'
@@ -36,6 +37,11 @@ const SettingsRoute = SettingsRouteImport.update({
 const PricingRoute = PricingRouteImport.update({
   id: '/pricing',
   path: '/pricing',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PanicRoute = PanicRouteImport.update({
+  id: '/panic',
+  path: '/panic',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OnboardingRoute = OnboardingRouteImport.update({
@@ -97,6 +103,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/intel': typeof IntelRoute
   '/onboarding': typeof OnboardingRoute
+  '/panic': typeof PanicRoute
   '/pricing': typeof PricingRoute
   '/settings': typeof SettingsRoute
   '/wallets': typeof WalletsRouteWithChildren
@@ -112,6 +119,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/intel': typeof IntelRoute
   '/onboarding': typeof OnboardingRoute
+  '/panic': typeof PanicRoute
   '/pricing': typeof PricingRoute
   '/settings': typeof SettingsRoute
   '/wallets': typeof WalletsRouteWithChildren
@@ -128,6 +136,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/intel': typeof IntelRoute
   '/onboarding': typeof OnboardingRoute
+  '/panic': typeof PanicRoute
   '/pricing': typeof PricingRoute
   '/settings': typeof SettingsRoute
   '/wallets': typeof WalletsRouteWithChildren
@@ -145,6 +154,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/intel'
     | '/onboarding'
+    | '/panic'
     | '/pricing'
     | '/settings'
     | '/wallets'
@@ -160,6 +170,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/intel'
     | '/onboarding'
+    | '/panic'
     | '/pricing'
     | '/settings'
     | '/wallets'
@@ -175,6 +186,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/intel'
     | '/onboarding'
+    | '/panic'
     | '/pricing'
     | '/settings'
     | '/wallets'
@@ -191,6 +203,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   IntelRoute: typeof IntelRoute
   OnboardingRoute: typeof OnboardingRoute
+  PanicRoute: typeof PanicRoute
   PricingRoute: typeof PricingRoute
   SettingsRoute: typeof SettingsRoute
   WalletsRoute: typeof WalletsRouteWithChildren
@@ -219,6 +232,13 @@ declare module '@tanstack/react-router' {
       path: '/pricing'
       fullPath: '/pricing'
       preLoaderRoute: typeof PricingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/panic': {
+      id: '/panic'
+      path: '/panic'
+      fullPath: '/panic'
+      preLoaderRoute: typeof PanicRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/onboarding': {
@@ -313,6 +333,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   IntelRoute: IntelRoute,
   OnboardingRoute: OnboardingRoute,
+  PanicRoute: PanicRoute,
   PricingRoute: PricingRoute,
   SettingsRoute: SettingsRoute,
   WalletsRoute: WalletsRouteWithChildren,

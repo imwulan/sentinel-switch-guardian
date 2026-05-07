@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { useSentinel } from "@/providers/SentinelProvider";
 import type { WalletStatus } from "@/components/sentinel/StatusBadge";
-import { AlertTriangle, Home, Activity, Bell, Settings, Wallet, Brain, ShieldCheck, Zap } from "lucide-react";
+import { AlertTriangle, Home, Activity, Bell, Settings, Wallet, Brain, ShieldCheck, ShieldAlert, Zap } from "lucide-react";
 
 export const Route = createFileRoute("/app")({
   component: AppDashboard,
