@@ -14,6 +14,7 @@ import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as IntelRouteImport } from './routes/intel'
+import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuditRouteImport } from './routes/audit'
 import { Route as AppRouteImport } from './routes/app'
 import { Route as AlertsRouteImport } from './routes/alerts'
@@ -45,6 +46,11 @@ const OnboardingRoute = OnboardingRouteImport.update({
 const IntelRoute = IntelRouteImport.update({
   id: '/intel',
   path: '/intel',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuditRoute = AuditRouteImport.update({
@@ -88,6 +94,7 @@ export interface FileRoutesByFullPath {
   '/alerts': typeof AlertsRoute
   '/app': typeof AppRoute
   '/audit': typeof AuditRoute
+  '/auth': typeof AuthRoute
   '/intel': typeof IntelRoute
   '/onboarding': typeof OnboardingRoute
   '/pricing': typeof PricingRoute
@@ -102,6 +109,7 @@ export interface FileRoutesByTo {
   '/alerts': typeof AlertsRoute
   '/app': typeof AppRoute
   '/audit': typeof AuditRoute
+  '/auth': typeof AuthRoute
   '/intel': typeof IntelRoute
   '/onboarding': typeof OnboardingRoute
   '/pricing': typeof PricingRoute
@@ -117,6 +125,7 @@ export interface FileRoutesById {
   '/alerts': typeof AlertsRoute
   '/app': typeof AppRoute
   '/audit': typeof AuditRoute
+  '/auth': typeof AuthRoute
   '/intel': typeof IntelRoute
   '/onboarding': typeof OnboardingRoute
   '/pricing': typeof PricingRoute
@@ -133,6 +142,7 @@ export interface FileRouteTypes {
     | '/alerts'
     | '/app'
     | '/audit'
+    | '/auth'
     | '/intel'
     | '/onboarding'
     | '/pricing'
@@ -147,6 +157,7 @@ export interface FileRouteTypes {
     | '/alerts'
     | '/app'
     | '/audit'
+    | '/auth'
     | '/intel'
     | '/onboarding'
     | '/pricing'
@@ -161,6 +172,7 @@ export interface FileRouteTypes {
     | '/alerts'
     | '/app'
     | '/audit'
+    | '/auth'
     | '/intel'
     | '/onboarding'
     | '/pricing'
@@ -176,6 +188,7 @@ export interface RootRouteChildren {
   AlertsRoute: typeof AlertsRoute
   AppRoute: typeof AppRoute
   AuditRoute: typeof AuditRoute
+  AuthRoute: typeof AuthRoute
   IntelRoute: typeof IntelRoute
   OnboardingRoute: typeof OnboardingRoute
   PricingRoute: typeof PricingRoute
@@ -220,6 +233,13 @@ declare module '@tanstack/react-router' {
       path: '/intel'
       fullPath: '/intel'
       preLoaderRoute: typeof IntelRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/audit': {
@@ -290,6 +310,7 @@ const rootRouteChildren: RootRouteChildren = {
   AlertsRoute: AlertsRoute,
   AppRoute: AppRoute,
   AuditRoute: AuditRoute,
+  AuthRoute: AuthRoute,
   IntelRoute: IntelRoute,
   OnboardingRoute: OnboardingRoute,
   PricingRoute: PricingRoute,
