@@ -6,6 +6,7 @@ import { ActivityFeed } from "@/components/sentinel/ActivityFeed";
 import { SecurityPanel } from "@/components/sentinel/SecurityPanel";
 import { AnomalyModal } from "@/components/sentinel/AnomalyModal";
 import { OnboardingModal } from "@/components/sentinel/OnboardingModal";
+import { RiskHistoryChart } from "@/components/sentinel/RiskHistoryChart";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { useSentinel } from "@/providers/SentinelProvider";
@@ -73,6 +74,7 @@ function AppDashboard() {
         <div className="grid gap-5 lg:grid-cols-3">
           <div className="space-y-5 lg:col-span-2">
             <AIScoreCard status={status} isDemo={isDemo} />
+            <RiskHistoryChart events={displayEvents} isDemo={isDemo} />
             <BehaviorPanel />
             <ActivityFeed items={displayEvents} />
           </div>
