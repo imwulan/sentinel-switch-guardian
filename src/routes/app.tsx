@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Header } from "@/components/sentinel/Header";
 import { BehaviorPanel } from "@/components/sentinel/BehaviorPanel";
 import { ActivityFeed } from "@/components/sentinel/ActivityFeed";
@@ -9,7 +9,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { useSentinel } from "@/providers/SentinelProvider";
 import type { WalletStatus } from "@/components/sentinel/StatusBadge";
-import { AlertTriangle, Home, Activity, Bell, Settings, Wallet, Brain, ShieldCheck, ShieldAlert, Zap } from "lucide-react";
+import { AlertTriangle, Home, Activity, Bell, Settings, Wallet, Brain, ShieldCheck, ShieldAlert, Zap, Sparkles, X } from "lucide-react";
+import { DEMO_BALANCE_SOL, DEMO_EVENTS, DEMO_WALLET_FULL, DEMO_WALLET_SHORT } from "@/lib/demo";
 
 export const Route = createFileRoute("/app")({
   component: AppDashboard,
