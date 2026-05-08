@@ -307,3 +307,28 @@ function AIScoreCard({ status, isDemo }: { status: WalletStatus; isDemo?: boolea
     </section>
   );
 }
+
+function DemoBanner({ onDismiss }: { onDismiss: () => void }) {
+  return (
+    <div className="glass relative flex items-center gap-3 rounded-2xl border border-safe/30 bg-safe/5 px-4 py-3 text-xs md:text-sm">
+      <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-safe/15 text-safe">
+        <Sparkles className="h-4 w-4" />
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="font-semibold text-foreground">
+          Demo mode <span className="ml-1 font-mono text-[10px] uppercase tracking-wider text-safe">{DEMO_WALLET_SHORT} · {DEMO_BALANCE_SOL} SOL</span>
+        </p>
+        <p className="text-muted-foreground">
+          Showing simulated wallet data. Connect a wallet to see your live behavioral firewall.
+        </p>
+      </div>
+      <button
+        onClick={onDismiss}
+        aria-label="Dismiss demo banner"
+        className="grid h-8 w-8 place-items-center rounded-lg text-muted-foreground hover:bg-secondary/60 hover:text-foreground"
+      >
+        <X className="h-4 w-4" />
+      </button>
+    </div>
+  );
+}
