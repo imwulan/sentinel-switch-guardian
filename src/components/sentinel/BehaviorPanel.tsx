@@ -27,20 +27,79 @@ function Fingerprint() {
   );
 }
 
+const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+function generateHeatmapData(): number[][] {
+  // 7 rows (days) x 24 cols (hours UTC). Peak between 14:00–22:00.
+  let seed = 42;
+  const rand = () => {
+    seed = (seed * 9301 + 49297) % 233280;
+    return seed / 233280;
+  };
+  return Array.from({ length: 7 }, () =>
+    Array.from({ length: 24 }, (_, h) => {
+      const inPeak = h >= 14 && h <= 22;
+      const base = inPeak
+        ? 0.55 + Math.sin(((h - 14) / 8) * Math.PI) * 0.35
+        : h >= 9 && h < 14
+        ? 0.18
+        : 0.05;
+      const v = base + (rand() - 0.5) * 0.25;
+      return Math.max(0, Math.min(1, v));
+    })
+  );
+}
+
 function Heatmap() {
-  const cells = Array.from({ length: 24 }, (_, i) => {
-    const v = Math.max(0, Math.sin((i - 8) * 0.5) * 0.7 + Math.random() * 0.3);
-    return Math.min(1, v);
-  });
+  const data = generateHeatmapData();
+  const colorFor = (v: number) => {
+    if (v < 0.08) return "oklch(0.85 0.22 145 / 0.06)";
+    const opacity = 0.18 + v * 0.82;
+    return `oklch(0.85 0.22 145 / ${opacity.toFixed(2)})`;
+  };
   return (
-    <div className="flex items-end gap-[3px]">
-      {cells.map((v, i) => (
-        <div
-          key={i}
-          className="w-1.5 rounded-sm bg-safe"
-          style={{ height: `${8 + v * 28}px`, opacity: 0.25 + v * 0.75 }}
-        />
-      ))}
+    <div className="space-y-2">
+      <div className="flex gap-2">
+        <div className="flex flex-col justify-between pr-1 text-[9px] text-muted-foreground/70">
+          {DAYS.map((d) => (
+            <span key={d} className="leading-none">{d}</span>
+          ))}
+        </div>
+        <div className="flex-1">
+          <div className="grid gap-[2px]" style={{ gridTemplateRows: "repeat(7, 1fr)" }}>
+            {data.map((row, r) => (
+              <div key={r} className="grid gap-[2px]" style={{ gridTemplateColumns: "repeat(24, 1fr)" }}>
+                {row.map((v, h) => {
+                  const txCount = Math.round(v * 18);
+                  const hourLabel = `${h.toString().padStart(2, "0")}:00 UTC`;
+                  return (
+                    <div
+                      key={h}
+                      title={`${DAYS[r]} ${hourLabel} — ${txCount} tx`}
+                      className="aspect-square rounded-[2px] ring-1 ring-inset ring-white/5 transition-transform hover:scale-125 hover:ring-safe/60"
+                      style={{ backgroundColor: colorFor(v) }}
+                    />
+                  );
+                })}
+              </div>
+            ))}
+          </div>
+          <div className="mt-1.5 flex justify-between text-[8px] text-muted-foreground/60">
+            <span>00</span>
+            <span>06</span>
+            <span>12</span>
+            <span>18</span>
+            <span>23</span>
+          </div>
+        </div>
+      </div>
+      <div className="flex items-center justify-end gap-1.5 text-[9px] text-muted-foreground/70">
+        <span>less</span>
+        {[0.05, 0.25, 0.5, 0.75, 0.95].map((v) => (
+          <div key={v} className="h-2 w-2 rounded-[2px]" style={{ backgroundColor: colorFor(v) }} />
+        ))}
+        <span>more</span>
+      </div>
     </div>
   );
 }
