@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { upsertWalletEvents } from "@/server/event-store";
 import { normalizeHeliusEvent } from "@/server/webhook-normalize";
+import { sendTelegramAlert, shouldAlertTelegram } from "@/lib/telegram";
 import { createClient } from "@supabase/supabase-js";
 
 type WebhookBody = Array<Record<string, unknown>>;
@@ -16,6 +17,12 @@ function getAnonClient() {
   const key = process.env.SUPABASE_PUBLISHABLE_KEY ?? "";
   if (!url || !key) return null;
   return createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
+}
+
+function getTelegramConfig() {
+  const botToken = process.env.TELEGRAM_BOT_TOKEN ?? "";
+  const chatId = process.env.TELEGRAM_CHAT_ID ?? "";
+  return botToken && chatId ? { botToken, chatId } : null;
 }
 
 export const Route = createFileRoute("/api/webhooks/helius")({
@@ -48,7 +55,9 @@ export const Route = createFileRoute("/api/webhooks/helius")({
         }
 
         let accepted = 0;
+        let telegramSent = 0;
         const supabase = getAnonClient();
+        const telegram = getTelegramConfig();
 
         for (const [wallet, txs] of byWallet.entries()) {
           const normalized = txs.map((tx) =>
@@ -75,6 +84,16 @@ export const Route = createFileRoute("/api/webhooks/helius")({
             await supabase.from("wallet_transactions").upsert(rows, { onConflict: "id" });
           }
 
+          if (telegram) {
+            for (const event of normalized) {
+              if (shouldAlertTelegram(event, 70)) {
+                const result = await sendTelegramAlert(event, wallet, telegram.botToken, telegram.chatId);
+                if (result.ok) telegramSent++;
+                else console.error("[Sentinel] Telegram alert failed:", result.error);
+              }
+            }
+          }
+
           accepted += normalized.length;
         }
 
@@ -82,6 +101,7 @@ export const Route = createFileRoute("/api/webhooks/helius")({
           ok: true,
           wallets: byWallet.size,
           accepted,
+          telegramSent,
         });
       },
     },

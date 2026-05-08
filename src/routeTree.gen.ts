@@ -21,6 +21,7 @@ import { Route as AppRouteImport } from './routes/app'
 import { Route as AlertsRouteImport } from './routes/alerts'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as WalletsAddressRouteImport } from './routes/wallets.$address'
+import { Route as ApiTelegramTestRouteImport } from './routes/api/telegram-test'
 import { Route as ApiEventsRouteImport } from './routes/api/events'
 import { Route as ApiWebhooksHeliusRouteImport } from './routes/api/webhooks/helius'
 
@@ -84,6 +85,11 @@ const WalletsAddressRoute = WalletsAddressRouteImport.update({
   path: '/$address',
   getParentRoute: () => WalletsRoute,
 } as any)
+const ApiTelegramTestRoute = ApiTelegramTestRouteImport.update({
+  id: '/api/telegram-test',
+  path: '/api/telegram-test',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiEventsRoute = ApiEventsRouteImport.update({
   id: '/api/events',
   path: '/api/events',
@@ -108,6 +114,7 @@ export interface FileRoutesByFullPath {
   '/settings': typeof SettingsRoute
   '/wallets': typeof WalletsRouteWithChildren
   '/api/events': typeof ApiEventsRoute
+  '/api/telegram-test': typeof ApiTelegramTestRoute
   '/wallets/$address': typeof WalletsAddressRoute
   '/api/webhooks/helius': typeof ApiWebhooksHeliusRoute
 }
@@ -124,6 +131,7 @@ export interface FileRoutesByTo {
   '/settings': typeof SettingsRoute
   '/wallets': typeof WalletsRouteWithChildren
   '/api/events': typeof ApiEventsRoute
+  '/api/telegram-test': typeof ApiTelegramTestRoute
   '/wallets/$address': typeof WalletsAddressRoute
   '/api/webhooks/helius': typeof ApiWebhooksHeliusRoute
 }
@@ -141,6 +149,7 @@ export interface FileRoutesById {
   '/settings': typeof SettingsRoute
   '/wallets': typeof WalletsRouteWithChildren
   '/api/events': typeof ApiEventsRoute
+  '/api/telegram-test': typeof ApiTelegramTestRoute
   '/wallets/$address': typeof WalletsAddressRoute
   '/api/webhooks/helius': typeof ApiWebhooksHeliusRoute
 }
@@ -159,6 +168,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/wallets'
     | '/api/events'
+    | '/api/telegram-test'
     | '/wallets/$address'
     | '/api/webhooks/helius'
   fileRoutesByTo: FileRoutesByTo
@@ -175,6 +185,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/wallets'
     | '/api/events'
+    | '/api/telegram-test'
     | '/wallets/$address'
     | '/api/webhooks/helius'
   id:
@@ -191,6 +202,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/wallets'
     | '/api/events'
+    | '/api/telegram-test'
     | '/wallets/$address'
     | '/api/webhooks/helius'
   fileRoutesById: FileRoutesById
@@ -208,6 +220,7 @@ export interface RootRouteChildren {
   SettingsRoute: typeof SettingsRoute
   WalletsRoute: typeof WalletsRouteWithChildren
   ApiEventsRoute: typeof ApiEventsRoute
+  ApiTelegramTestRoute: typeof ApiTelegramTestRoute
   ApiWebhooksHeliusRoute: typeof ApiWebhooksHeliusRoute
 }
 
@@ -297,6 +310,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WalletsAddressRouteImport
       parentRoute: typeof WalletsRoute
     }
+    '/api/telegram-test': {
+      id: '/api/telegram-test'
+      path: '/api/telegram-test'
+      fullPath: '/api/telegram-test'
+      preLoaderRoute: typeof ApiTelegramTestRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/events': {
       id: '/api/events'
       path: '/api/events'
@@ -338,6 +358,7 @@ const rootRouteChildren: RootRouteChildren = {
   SettingsRoute: SettingsRoute,
   WalletsRoute: WalletsRouteWithChildren,
   ApiEventsRoute: ApiEventsRoute,
+  ApiTelegramTestRoute: ApiTelegramTestRoute,
   ApiWebhooksHeliusRoute: ApiWebhooksHeliusRoute,
 }
 export const routeTree = rootRouteImport
