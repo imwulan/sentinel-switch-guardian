@@ -128,14 +128,17 @@ function SimulationCard({ value, onChange, onSimulate, status, summary }: { valu
   );
 }
 
-function Hero({ onTrigger, status }: { onTrigger: () => void; status: WalletStatus }) {
+function Hero({ onTrigger, status, isDemo }: { onTrigger: () => void; status: WalletStatus; isDemo?: boolean }) {
   return (
     <section className="glass relative overflow-hidden rounded-3xl p-7 md:p-10 scanline">
       <div className="relative z-10 grid items-center gap-6 md:grid-cols-[1.4fr_1fr]">
         <div>
           <p className="mb-3 inline-flex items-center gap-2 rounded-full border border-safe/30 bg-safe/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-safe">
-            <span className="h-1.5 w-1.5 rounded-full bg-safe ticker" />
-            Guardian online
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-safe opacity-75" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-safe" />
+            </span>
+            Guardian online{isDemo ? " · Demo" : ""}
           </p>
           <h2 className="text-3xl font-semibold leading-tight tracking-tight md:text-5xl">
             Your wallet, <span className="text-safe">watched</span> by an AI that learns how <em className="not-italic text-foreground/80">you</em> move.
