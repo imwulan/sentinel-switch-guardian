@@ -28,12 +28,17 @@ function AppDashboard() {
   const [txToSimulate, setTxToSimulate] = useState("");
   const [simState, setSimState] = useState<"idle" | "loading" | "done">("idle");
   const [simSummary, setSimSummary] = useState<string>("");
+  const [demoDismissed, setDemoDismissed] = useState(false);
+
+  const isDemo = !selectedWallet && events.length === 0;
+  const displayWallet = isDemo ? DEMO_WALLET_FULL : (selectedWallet ?? "No wallet connected");
+  const displayEvents = isDemo ? DEMO_EVENTS : events;
 
   const status = useMemo<WalletStatus>(() => {
-    if (events.some((e) => e.risk === "high")) return "threat";
-    if (events.some((e) => e.risk === "medium")) return "suspicious";
+    if (displayEvents.some((e) => e.risk === "high")) return "threat";
+    if (displayEvents.some((e) => e.risk === "medium")) return "suspicious";
     return "normal";
-  }, [events]);
+  }, [displayEvents]);
 
   const trigger = () => setOpen(true);
 
@@ -58,18 +63,19 @@ function AppDashboard() {
     <div className="min-h-screen pb-24 md:pb-8">
       <div className="pointer-events-none fixed inset-0 grid-bg opacity-40" />
       <main className="relative mx-auto max-w-7xl space-y-5 p-4 md:p-6">
-        <Header status={status} wallet={selectedWallet ?? "No wallet connected"} />
+        {isDemo && !demoDismissed && <DemoBanner onDismiss={() => setDemoDismissed(true)} />}
+        <Header status={status} wallet={displayWallet} />
         <SubNav />
-        <Hero onTrigger={trigger} status={status} />
+        <Hero onTrigger={trigger} status={status} isDemo={isDemo} />
         <ThreatTicker />
         <div className="grid gap-5 lg:grid-cols-3">
           <div className="space-y-5 lg:col-span-2">
-            <AIScoreCard status={status} />
+            <AIScoreCard status={status} isDemo={isDemo} />
             <BehaviorPanel />
-            <ActivityFeed items={events} />
+            <ActivityFeed items={displayEvents} />
           </div>
           <div className="space-y-5">
-            <SecurityPanel events={events} />
+            <SecurityPanel events={displayEvents} />
             <SimulationCard onSimulate={runSimulation} value={txToSimulate} onChange={setTxToSimulate} status={simState} summary={simSummary} />
             <SwitchCard onTrigger={trigger} />
           </div>
