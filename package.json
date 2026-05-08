@@ -8,6 +8,7 @@
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
+    "start": "wrangler dev --port 5000 --ip 0.0.0.0 --no-live-reload",
     "lint": "eslint .",
     "format": "prettier --write ."
   },
