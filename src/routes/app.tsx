@@ -11,6 +11,7 @@ import { useSentinel } from "@/providers/SentinelProvider";
 import type { WalletStatus } from "@/components/sentinel/StatusBadge";
 import { AlertTriangle, Home, Activity, Bell, Settings, Wallet, Brain, ShieldCheck, ShieldAlert, Zap, Sparkles, X } from "lucide-react";
 import { DEMO_BALANCE_SOL, DEMO_EVENTS, DEMO_WALLET_FULL, DEMO_WALLET_SHORT } from "@/lib/demo";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/app")({
   component: AppDashboard,
