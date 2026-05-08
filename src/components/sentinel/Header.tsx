@@ -5,9 +5,11 @@ import { toast } from "sonner";
 import { StatusBadge, type WalletStatus } from "./StatusBadge";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { useSentinel } from "@/providers/SentinelProvider";
 
 export function Header({ status, wallet }: { status: WalletStatus; wallet: string }) {
   const { user } = useAuth();
+  const { balanceSol } = useSentinel();
   const hasWallet = wallet.length > 10 && !wallet.includes(" ");
   const short = hasWallet ? `${wallet.slice(0, 4)}…${wallet.slice(-4)}` : wallet;
   const copyWallet = async () => {
@@ -38,7 +40,11 @@ export function Header({ status, wallet }: { status: WalletStatus; wallet: strin
         <StatusBadge status={status} />
         <div className="glass flex items-center gap-2 rounded-full px-3 py-1.5 font-mono text-xs text-muted-foreground">
           <span className="h-1.5 w-1.5 rounded-full bg-safe" />
-          Solana
+          {balanceSol !== null ? (
+            <span className="text-safe font-semibold">{balanceSol.toFixed(3)} SOL</span>
+          ) : (
+            <span>Solana</span>
+          )}
           <span className="mx-1 opacity-40">·</span>
           <span className="text-foreground">{short}</span>
           <Copy

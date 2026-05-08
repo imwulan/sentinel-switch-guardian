@@ -1,5 +1,5 @@
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { clusterApiUrl, Connection } from "@solana/web3.js";
+import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { clusterApiUrl, Connection, LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
 import { ConnectionProvider, WalletProvider, useWallet } from "@solana/wallet-adapter-react";
 import { WalletModalProvider } from "@solana/wallet-adapter-react-ui";
 import { PhantomWalletAdapter } from "@solana/wallet-adapter-phantom";
@@ -19,6 +19,7 @@ import {
 type SentinelContextValue = {
   connectedWallet: string | null;
   selectedWallet: string | null;
+  balanceSol: number | null;
   events: SentinelEvent[];
   settings: SentinelSettings;
   setSettings: (next: SentinelSettings) => void;
@@ -39,9 +40,11 @@ function SentinelStateProvider({ children }: { children: React.ReactNode }) {
   const { publicKey } = useWallet();
   const connectedWallet = publicKey?.toBase58() ?? null;
   const [selectedWallet, setSelectedWalletState] = useState<string | null>(() => loadActiveWallet());
+  const [balanceSol, setBalanceSol] = useState<number | null>(null);
   const [events, setEvents] = useState<SentinelEvent[]>([]);
   const [settings, setSettingsState] = useState<SentinelSettings>(() => loadSettings());
   const [userId, setUserId] = useState<string | null>(null);
+  const realtimeChannelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
 
   const connection = useMemo(() => new Connection(RPC_ENDPOINT, "confirmed"), []);
 
@@ -94,7 +97,6 @@ function SentinelStateProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
-
   const refreshEvents = async () => {
     if (!selected) {
       setEvents([]);
@@ -109,8 +111,6 @@ function SentinelStateProvider({ children }: { children: React.ReactNode }) {
           return;
         }
       }
-
-      // Fallback to direct RPC polling when webhook store is empty.
       const list = await fetchWalletEvents(connection, selected);
       setEvents(list);
     } catch {
@@ -125,12 +125,79 @@ function SentinelStateProvider({ children }: { children: React.ReactNode }) {
   }, [connectedWallet]);
 
   useEffect(() => {
+    if (!selected) {
+      setBalanceSol(null);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const pk = new PublicKey(selected);
+        const lamports = await connection.getBalance(pk);
+        if (!cancelled) setBalanceSol(lamports / LAMPORTS_PER_SOL);
+      } catch {
+        if (!cancelled) setBalanceSol(null);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [selected, connection]);
+
+  useEffect(() => {
     void refreshEvents();
     if (!selected) return;
-    const id = window.setInterval(() => {
-      void refreshEvents();
-    }, 15000);
+    const id = window.setInterval(() => void refreshEvents(), 15_000);
     return () => window.clearInterval(id);
+  }, [selected]);
+
+  useEffect(() => {
+    if (realtimeChannelRef.current) {
+      void supabase.removeChannel(realtimeChannelRef.current);
+      realtimeChannelRef.current = null;
+    }
+
+    if (!selected) return;
+
+    const channel = supabase
+      .channel(`wallet_tx_${selected}`)
+      .on(
+        "postgres_changes" as Parameters<ReturnType<typeof supabase.channel>["on"]>[0],
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "wallet_transactions",
+          filter: `wallet=eq.${selected}`,
+        },
+        (payload: { new: Record<string, unknown> }) => {
+          const row = payload.new;
+          const event: SentinelEvent = {
+            id: row.id as string,
+            signature: row.signature as string,
+            slot: (row.slot as number) ?? 0,
+            timestamp: row.ts as number,
+            kind: row.kind as SentinelEvent["kind"],
+            label: row.label as string,
+            detail: row.detail as string,
+            risk: row.risk as SentinelEvent["risk"],
+            programs: (row.programs as string[]) ?? [],
+            from: (row.from_account as string) ?? undefined,
+            to: (row.to_account as string) ?? undefined,
+            amountSol: (row.amount_sol as number) ?? undefined,
+          };
+          setEvents((prev) => {
+            if (prev.some((e) => e.id === event.id)) return prev;
+            return [event, ...prev].slice(0, 250);
+          });
+        }
+      )
+      .subscribe();
+
+    realtimeChannelRef.current = channel;
+    return () => {
+      if (realtimeChannelRef.current) {
+        void supabase.removeChannel(realtimeChannelRef.current);
+        realtimeChannelRef.current = null;
+      }
+    };
   }, [selected]);
 
   const simulate = async (base64Tx: string) => {
@@ -145,6 +212,7 @@ function SentinelStateProvider({ children }: { children: React.ReactNode }) {
       value={{
         connectedWallet,
         selectedWallet: selected,
+        balanceSol,
         events,
         settings,
         setSettings,

@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { upsertWalletEvents } from "@/server/event-store";
 import { normalizeHeliusEvent } from "@/server/webhook-normalize";
+import { createClient } from "@supabase/supabase-js";
 
 type WebhookBody = Array<Record<string, unknown>>;
 
@@ -8,6 +9,13 @@ function getWalletFromTx(tx: Record<string, unknown>) {
   const feePayer = tx.feePayer;
   if (typeof feePayer === "string") return feePayer;
   return null;
+}
+
+function getAnonClient() {
+  const url = process.env.SUPABASE_URL ?? "";
+  const key = process.env.SUPABASE_PUBLISHABLE_KEY ?? "";
+  if (!url || !key) return null;
+  return createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
 }
 
 export const Route = createFileRoute("/api/webhooks/helius")({
@@ -40,11 +48,33 @@ export const Route = createFileRoute("/api/webhooks/helius")({
         }
 
         let accepted = 0;
+        const supabase = getAnonClient();
+
         for (const [wallet, txs] of byWallet.entries()) {
           const normalized = txs.map((tx) =>
             normalizeHeliusEvent(tx as Parameters<typeof normalizeHeliusEvent>[0], wallet)
           );
           upsertWalletEvents(wallet, normalized);
+
+          if (supabase) {
+            const rows = normalized.map((e) => ({
+              id: e.id,
+              wallet,
+              signature: e.signature,
+              slot: e.slot,
+              ts: e.timestamp,
+              kind: e.kind,
+              label: e.label,
+              detail: e.detail,
+              risk: e.risk,
+              programs: e.programs,
+              from_account: e.from ?? null,
+              to_account: e.to ?? null,
+              amount_sol: e.amountSol ?? null,
+            }));
+            await supabase.from("wallet_transactions").upsert(rows, { onConflict: "id" });
+          }
+
           accepted += normalized.length;
         }
 

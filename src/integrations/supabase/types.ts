@@ -14,6 +14,57 @@ export type Database = {
   }
   public: {
     Tables: {
+      wallet_transactions: {
+        Row: {
+          id: string
+          wallet: string
+          signature: string
+          slot: number | null
+          ts: number
+          kind: string
+          label: string
+          detail: string
+          risk: string
+          programs: string[] | null
+          from_account: string | null
+          to_account: string | null
+          amount_sol: number | null
+          created_at: string
+        }
+        Insert: {
+          id: string
+          wallet: string
+          signature: string
+          slot?: number | null
+          ts: number
+          kind?: string
+          label?: string
+          detail?: string
+          risk?: string
+          programs?: string[] | null
+          from_account?: string | null
+          to_account?: string | null
+          amount_sol?: number | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          wallet?: string
+          signature?: string
+          slot?: number | null
+          ts?: number
+          kind?: string
+          label?: string
+          detail?: string
+          risk?: string
+          programs?: string[] | null
+          from_account?: string | null
+          to_account?: string | null
+          amount_sol?: number | null
+          created_at?: string
+        }
+        Relationships: []
+      }
       alert_channels: {
         Row: {
           created_at: string

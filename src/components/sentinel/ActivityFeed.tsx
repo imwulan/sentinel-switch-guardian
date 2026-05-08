@@ -1,4 +1,5 @@
-import { ArrowUpRight, ArrowLeftRight, Sparkles, FileSignature } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { ArrowUpRight, ArrowLeftRight, Sparkles, FileSignature, ExternalLink } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { SentinelEvent } from "@/lib/sentinel-types";
 
@@ -25,6 +26,20 @@ function relativeTime(timestamp: number) {
 }
 
 export function ActivityFeed({ items }: { items: SentinelEvent[] }) {
+  const prevIdsRef = useRef<Set<string>>(new Set());
+  const [newIds, setNewIds] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    const incoming = items.filter((e) => !prevIdsRef.current.has(e.id));
+    if (incoming.length > 0) {
+      const ids = new Set(incoming.map((e) => e.id));
+      setNewIds(ids);
+      const t = window.setTimeout(() => setNewIds(new Set()), 3000);
+      return () => window.clearTimeout(t);
+    }
+    prevIdsRef.current = new Set(items.map((e) => e.id));
+  }, [items]);
+
   return (
     <section className="glass rounded-2xl p-6">
       <div className="mb-4 flex items-center justify-between">
@@ -40,16 +55,43 @@ export function ActivityFeed({ items }: { items: SentinelEvent[] }) {
       <ul className="divide-y divide-border/40">
         {items.map((it) => {
           const Icon = iconMap[it.kind];
+          const isNew = newIds.has(it.id);
           return (
-            <li key={it.id} className="flex items-center gap-4 py-3 transition-colors hover:bg-white/[0.02]">
-              <div className="grid h-9 w-9 place-items-center rounded-lg bg-secondary">
-                <Icon className="h-4 w-4 text-foreground/80" />
+            <li
+              key={it.id}
+              className={cn(
+                "flex items-center gap-4 py-3 transition-all duration-500 hover:bg-white/[0.02]",
+                isNew && "animate-pulse bg-safe/5"
+              )}
+            >
+              <div className={cn(
+                "grid h-9 w-9 place-items-center rounded-lg bg-secondary transition-colors",
+                isNew && "bg-safe/20"
+              )}>
+                <Icon className={cn("h-4 w-4 text-foreground/80", isNew && "text-safe")} />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium">{it.label}</p>
+                <p className="truncate text-sm font-medium">
+                  {it.label}
+                  {isNew && (
+                    <span className="ml-2 rounded-full bg-safe/20 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-safe">
+                      new
+                    </span>
+                  )}
+                </p>
                 <p className="truncate font-mono text-xs text-muted-foreground">{it.detail}</p>
               </div>
               <span className="hidden text-xs text-muted-foreground sm:inline">{relativeTime(it.timestamp)}</span>
+              <a
+                href={`https://solscan.io/tx/${it.signature}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hidden opacity-40 hover:opacity-100 sm:inline"
+                title="View on Solscan"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <ExternalLink className="h-3 w-3 text-muted-foreground" />
+              </a>
               <span
                 className={cn(
                   "rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider",
