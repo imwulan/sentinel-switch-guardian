@@ -5,6 +5,7 @@ import { BehaviorPanel } from "@/components/sentinel/BehaviorPanel";
 import { ActivityFeed } from "@/components/sentinel/ActivityFeed";
 import { SecurityPanel } from "@/components/sentinel/SecurityPanel";
 import { AnomalyModal } from "@/components/sentinel/AnomalyModal";
+import { OnboardingModal } from "@/components/sentinel/OnboardingModal";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { useSentinel } from "@/providers/SentinelProvider";
@@ -111,6 +112,8 @@ function AppDashboard() {
         onKill={() => setOpen(false)}
         onClose={() => setOpen(false)}
       />
+
+      <OnboardingModal />
     </div>
   );
 }
