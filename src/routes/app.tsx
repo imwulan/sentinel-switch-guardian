@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Header } from "@/components/sentinel/Header";
 import { BehaviorPanel } from "@/components/sentinel/BehaviorPanel";
 import { ActivityFeed } from "@/components/sentinel/ActivityFeed";
@@ -9,7 +9,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { useSentinel } from "@/providers/SentinelProvider";
 import type { WalletStatus } from "@/components/sentinel/StatusBadge";
-import { AlertTriangle, Home, Activity, Bell, Settings, Wallet, Brain, ShieldCheck, ShieldAlert, Zap } from "lucide-react";
+import { AlertTriangle, Home, Activity, Bell, Settings, Wallet, Brain, ShieldCheck, ShieldAlert, Zap, Sparkles, X } from "lucide-react";
+import { DEMO_BALANCE_SOL, DEMO_EVENTS, DEMO_WALLET_FULL, DEMO_WALLET_SHORT } from "@/lib/demo";
 
 export const Route = createFileRoute("/app")({
   component: AppDashboard,
@@ -27,12 +28,17 @@ function AppDashboard() {
   const [txToSimulate, setTxToSimulate] = useState("");
   const [simState, setSimState] = useState<"idle" | "loading" | "done">("idle");
   const [simSummary, setSimSummary] = useState<string>("");
+  const [demoDismissed, setDemoDismissed] = useState(false);
+
+  const isDemo = !selectedWallet && events.length === 0;
+  const displayWallet = isDemo ? DEMO_WALLET_FULL : (selectedWallet ?? "No wallet connected");
+  const displayEvents = isDemo ? DEMO_EVENTS : events;
 
   const status = useMemo<WalletStatus>(() => {
-    if (events.some((e) => e.risk === "high")) return "threat";
-    if (events.some((e) => e.risk === "medium")) return "suspicious";
+    if (displayEvents.some((e) => e.risk === "high")) return "threat";
+    if (displayEvents.some((e) => e.risk === "medium")) return "suspicious";
     return "normal";
-  }, [events]);
+  }, [displayEvents]);
 
   const trigger = () => setOpen(true);
 
@@ -57,18 +63,19 @@ function AppDashboard() {
     <div className="min-h-screen pb-24 md:pb-8">
       <div className="pointer-events-none fixed inset-0 grid-bg opacity-40" />
       <main className="relative mx-auto max-w-7xl space-y-5 p-4 md:p-6">
-        <Header status={status} wallet={selectedWallet ?? "No wallet connected"} />
+        {isDemo && !demoDismissed && <DemoBanner onDismiss={() => setDemoDismissed(true)} />}
+        <Header status={status} wallet={displayWallet} />
         <SubNav />
-        <Hero onTrigger={trigger} status={status} />
+        <Hero onTrigger={trigger} status={status} isDemo={isDemo} />
         <ThreatTicker />
         <div className="grid gap-5 lg:grid-cols-3">
           <div className="space-y-5 lg:col-span-2">
-            <AIScoreCard status={status} />
+            <AIScoreCard status={status} isDemo={isDemo} />
             <BehaviorPanel />
-            <ActivityFeed items={events} />
+            <ActivityFeed items={displayEvents} />
           </div>
           <div className="space-y-5">
-            <SecurityPanel events={events} />
+            <SecurityPanel events={displayEvents} />
             <SimulationCard onSimulate={runSimulation} value={txToSimulate} onChange={setTxToSimulate} status={simState} summary={simSummary} />
             <SwitchCard onTrigger={trigger} />
           </div>
@@ -121,14 +128,17 @@ function SimulationCard({ value, onChange, onSimulate, status, summary }: { valu
   );
 }
 
-function Hero({ onTrigger, status }: { onTrigger: () => void; status: WalletStatus }) {
+function Hero({ onTrigger, status, isDemo }: { onTrigger: () => void; status: WalletStatus; isDemo?: boolean }) {
   return (
     <section className="glass relative overflow-hidden rounded-3xl p-7 md:p-10 scanline">
       <div className="relative z-10 grid items-center gap-6 md:grid-cols-[1.4fr_1fr]">
         <div>
           <p className="mb-3 inline-flex items-center gap-2 rounded-full border border-safe/30 bg-safe/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-safe">
-            <span className="h-1.5 w-1.5 rounded-full bg-safe ticker" />
-            Guardian online
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-safe opacity-75" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-safe" />
+            </span>
+            Guardian online{isDemo ? " · Demo" : ""}
           </p>
           <h2 className="text-3xl font-semibold leading-tight tracking-tight md:text-5xl">
             Your wallet, <span className="text-safe">watched</span> by an AI that learns how <em className="not-italic text-foreground/80">you</em> move.
@@ -232,8 +242,29 @@ function ThreatTicker() {
   );
 }
 
-function AIScoreCard({ status }: { status: WalletStatus }) {
-  const score = status === "threat" ? 88 : status === "suspicious" ? 52 : 14;
+function AIScoreCard({ status, isDemo }: { status: WalletStatus; isDemo?: boolean }) {
+  const target = status === "threat" ? 88 : status === "suspicious" ? 52 : 14;
+  const [score, setScore] = useState(isDemo ? 0 : target);
+
+  useEffect(() => {
+    if (!isDemo) {
+      setScore(target);
+      return;
+    }
+    setScore(0);
+    let raf = 0;
+    const start = performance.now();
+    const duration = 1400;
+    const tick = (t: number) => {
+      const p = Math.min(1, (t - start) / duration);
+      const eased = 1 - Math.pow(1 - p, 3);
+      setScore(Math.round(target * eased));
+      if (p < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [isDemo, target]);
+
   const color = score >= 70 ? "text-threat" : score >= 35 ? "text-warn" : "text-safe";
   const ring = score >= 70 ? "stroke-threat" : score >= 35 ? "stroke-warn" : "stroke-safe";
   const offset = 264 - (264 * score) / 100;
@@ -250,11 +281,11 @@ function AIScoreCard({ status }: { status: WalletStatus }) {
         <div className="relative h-28 w-28">
           <svg viewBox="0 0 100 100" className="h-full w-full -rotate-90">
             <circle cx="50" cy="50" r="42" strokeWidth="8" className="stroke-secondary" fill="none" />
-            <circle cx="50" cy="50" r="42" strokeWidth="8" fill="none" strokeLinecap="round" className={ring} strokeDasharray="264" strokeDashoffset={offset} />
+            <circle cx="50" cy="50" r="42" strokeWidth="8" fill="none" strokeLinecap="round" className={`${ring} transition-all duration-300`} strokeDasharray="264" strokeDashoffset={offset} />
           </svg>
           <div className="absolute inset-0 grid place-items-center">
             <div className="text-center">
-              <p className={`font-mono text-2xl font-bold ${color}`}>{score}</p>
+              <p className={`font-mono text-2xl font-bold tabular-nums ${color}`}>{score}</p>
               <p className="text-[10px] uppercase tracking-wider text-muted-foreground">/ 100</p>
             </div>
           </div>
@@ -274,5 +305,30 @@ function AIScoreCard({ status }: { status: WalletStatus }) {
         </ul>
       </div>
     </section>
+  );
+}
+
+function DemoBanner({ onDismiss }: { onDismiss: () => void }) {
+  return (
+    <div className="glass relative flex items-center gap-3 rounded-2xl border border-safe/30 bg-safe/5 px-4 py-3 text-xs md:text-sm">
+      <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-safe/15 text-safe">
+        <Sparkles className="h-4 w-4" />
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="font-semibold text-foreground">
+          Demo mode <span className="ml-1 font-mono text-[10px] uppercase tracking-wider text-safe">{DEMO_WALLET_SHORT} · {DEMO_BALANCE_SOL} SOL</span>
+        </p>
+        <p className="text-muted-foreground">
+          Showing simulated wallet data. Connect a wallet to see your live behavioral firewall.
+        </p>
+      </div>
+      <button
+        onClick={onDismiss}
+        aria-label="Dismiss demo banner"
+        className="grid h-8 w-8 place-items-center rounded-lg text-muted-foreground hover:bg-secondary/60 hover:text-foreground"
+      >
+        <X className="h-4 w-4" />
+      </button>
+    </div>
   );
 }
