@@ -242,8 +242,29 @@ function ThreatTicker() {
   );
 }
 
-function AIScoreCard({ status }: { status: WalletStatus }) {
-  const score = status === "threat" ? 88 : status === "suspicious" ? 52 : 14;
+function AIScoreCard({ status, isDemo }: { status: WalletStatus; isDemo?: boolean }) {
+  const target = status === "threat" ? 88 : status === "suspicious" ? 52 : 14;
+  const [score, setScore] = useState(isDemo ? 0 : target);
+
+  useEffect(() => {
+    if (!isDemo) {
+      setScore(target);
+      return;
+    }
+    setScore(0);
+    let raf = 0;
+    const start = performance.now();
+    const duration = 1400;
+    const tick = (t: number) => {
+      const p = Math.min(1, (t - start) / duration);
+      const eased = 1 - Math.pow(1 - p, 3);
+      setScore(Math.round(target * eased));
+      if (p < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [isDemo, target]);
+
   const color = score >= 70 ? "text-threat" : score >= 35 ? "text-warn" : "text-safe";
   const ring = score >= 70 ? "stroke-threat" : score >= 35 ? "stroke-warn" : "stroke-safe";
   const offset = 264 - (264 * score) / 100;
@@ -260,11 +281,11 @@ function AIScoreCard({ status }: { status: WalletStatus }) {
         <div className="relative h-28 w-28">
           <svg viewBox="0 0 100 100" className="h-full w-full -rotate-90">
             <circle cx="50" cy="50" r="42" strokeWidth="8" className="stroke-secondary" fill="none" />
-            <circle cx="50" cy="50" r="42" strokeWidth="8" fill="none" strokeLinecap="round" className={ring} strokeDasharray="264" strokeDashoffset={offset} />
+            <circle cx="50" cy="50" r="42" strokeWidth="8" fill="none" strokeLinecap="round" className={`${ring} transition-all duration-300`} strokeDasharray="264" strokeDashoffset={offset} />
           </svg>
           <div className="absolute inset-0 grid place-items-center">
             <div className="text-center">
-              <p className={`font-mono text-2xl font-bold ${color}`}>{score}</p>
+              <p className={`font-mono text-2xl font-bold tabular-nums ${color}`}>{score}</p>
               <p className="text-[10px] uppercase tracking-wider text-muted-foreground">/ 100</p>
             </div>
           </div>
