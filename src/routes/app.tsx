@@ -174,13 +174,145 @@ function Hero({ onTrigger, status, isDemo }: { onTrigger: () => void; status: Wa
 }
 
 function SwitchCard({ onTrigger }: { onTrigger: () => void }) {
+  const TOTAL = 30;
+  const [secondsLeft, setSecondsLeft] = useState(TOTAL);
+  const [resolved, setResolved] = useState<null | "approved" | "killed" | "auto">(null);
+
+  useEffect(() => {
+    if (resolved) return;
+    if (secondsLeft <= 0) {
+      setResolved("auto");
+      toast.error("Transaction auto-blocked", {
+        icon: <ShieldAlert className="h-4 w-4 text-threat" />,
+        description: "No decision within 30s — Sentinel blocked it by default.",
+      });
+      return;
+    }
+    const id = setTimeout(() => setSecondsLeft((s) => s - 1), 1000);
+    return () => clearTimeout(id);
+  }, [secondsLeft, resolved]);
+
+  const handleApprove = () => {
+    if (resolved) return;
+    setResolved("approved");
+    toast.success("Transaction approved", {
+      icon: <ShieldCheck className="h-4 w-4 text-safe" />,
+      description: "Swap of 1.2 SOL → USDC sent to Jupiter v6.",
+    });
+  };
+  const handleKill = () => {
+    if (resolved) return;
+    setResolved("killed");
+    toast.error("Transaction blocked", {
+      icon: <ShieldAlert className="h-4 w-4 text-threat" />,
+      description: "Sentinel killed the pending swap before broadcast.",
+    });
+    onTrigger?.();
+  };
+  const reset = () => {
+    setResolved(null);
+    setSecondsLeft(TOTAL);
+  };
+
+  const pct = (secondsLeft / TOTAL) * 100;
+  const disabled = resolved !== null;
+
   return (
     <section className="glass rounded-2xl p-6">
-      <h2 className="mb-1 text-sm font-semibold uppercase tracking-[0.16em] text-muted-foreground">The Switch</h2>
-      <p className="mb-5 text-xs text-muted-foreground">Manual override for the next pending transaction.</p>
+      <div className="mb-5 flex items-center justify-between">
+        <div>
+          <h2 className="text-sm font-semibold uppercase tracking-[0.16em] text-muted-foreground">The Switch</h2>
+          <p className="text-xs text-muted-foreground">Manual override for the next pending transaction.</p>
+        </div>
+        {resolved && (
+          <button onClick={reset} className="rounded-md border border-white/10 px-2 py-1 text-[10px] uppercase tracking-wider text-muted-foreground hover:bg-white/5">
+            New tx
+          </button>
+        )}
+      </div>
+
+      {/* Pending transaction card */}
+      <div className="mb-4 rounded-2xl border border-white/10 bg-surface-elevated/60 p-4">
+        <div className="mb-3 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="grid h-7 w-7 place-items-center rounded-lg bg-safe/15">
+              <Zap className="h-3.5 w-3.5 text-safe" />
+            </div>
+            <div>
+              <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Pending</p>
+              <p className="text-sm font-semibold">Token Swap</p>
+            </div>
+          </div>
+          <div className="text-right">
+            <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Risk</p>
+            <p className="font-mono text-sm text-safe">12<span className="text-muted-foreground">/100</span></p>
+          </div>
+        </div>
+
+        <dl className="mb-3 grid grid-cols-2 gap-x-3 gap-y-2 text-xs">
+          <div>
+            <dt className="text-[10px] uppercase tracking-wider text-muted-foreground">From</dt>
+            <dd className="font-mono">7xKXt…P9aQ</dd>
+          </div>
+          <div>
+            <dt className="text-[10px] uppercase tracking-wider text-muted-foreground">To</dt>
+            <dd className="truncate">Jupiter Aggregator v6</dd>
+          </div>
+          <div>
+            <dt className="text-[10px] uppercase tracking-wider text-muted-foreground">Amount</dt>
+            <dd className="font-mono">1.2 SOL → USDC</dd>
+          </div>
+          <div>
+            <dt className="text-[10px] uppercase tracking-wider text-muted-foreground">Program</dt>
+            <dd className="font-mono">JUP4F…wGz</dd>
+          </div>
+        </dl>
+
+        <div className="mb-3 flex items-center gap-2 rounded-lg border border-safe/25 bg-safe/5 px-3 py-2 text-xs">
+          <Sparkles className="h-3.5 w-3.5 text-safe" />
+          <span className="text-safe">AI verdict:</span>
+          <span className="text-foreground/90">Matches baseline behavior ✓</span>
+        </div>
+
+        <div>
+          <div className="mb-1.5 flex items-center justify-between text-[11px]">
+            <span className="text-muted-foreground">
+              {resolved === "approved" && "Approved"}
+              {resolved === "killed" && "Killed by user"}
+              {resolved === "auto" && "Auto-blocked"}
+              {!resolved && "Auto-block in"}
+            </span>
+            <span className={cn("font-mono", secondsLeft <= 10 && !resolved ? "text-warn" : "text-muted-foreground")}>
+              {secondsLeft}s
+            </span>
+          </div>
+          <div className="h-1 overflow-hidden rounded-full bg-secondary">
+            <div
+              className={cn(
+                "h-full transition-all duration-1000 ease-linear",
+                resolved === "approved" ? "bg-safe" : resolved ? "bg-threat" : secondsLeft <= 10 ? "bg-warn" : "bg-safe",
+              )}
+              style={{ width: `${resolved ? 100 : pct}%` }}
+            />
+          </div>
+        </div>
+      </div>
+
       <div className="grid gap-3">
-        <button className="group rounded-xl border border-safe/30 bg-safe/10 px-4 py-3.5 text-sm font-semibold text-safe transition-all hover:bg-safe/20 hover:glow-safe">✓ Approve next action</button>
-        <button onClick={onTrigger} className="rounded-xl bg-threat px-4 py-3.5 text-sm font-bold uppercase tracking-wide text-white glow-threat transition-transform hover:scale-[1.02]">⛔ Kill Process</button>
+        <button
+          onClick={handleApprove}
+          disabled={disabled}
+          className="rounded-xl border border-safe/30 bg-safe/10 px-4 py-3.5 text-sm font-semibold text-safe transition-all hover:bg-safe/20 hover:glow-safe disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-safe/10 disabled:hover:shadow-none"
+        >
+          ✓ Approve transaction
+        </button>
+        <button
+          onClick={handleKill}
+          disabled={disabled}
+          className="rounded-xl bg-threat px-4 py-3.5 text-sm font-bold uppercase tracking-wide text-white glow-threat transition-transform hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:scale-100"
+        >
+          ⛔ Kill Process
+        </button>
         <Link to="/panic" className="rounded-xl border border-threat/40 bg-threat/10 px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-threat hover:bg-threat/20">
           Panic Mode → Revoke all approvals
         </Link>
