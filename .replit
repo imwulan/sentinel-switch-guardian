@@ -1,4 +1,4 @@
-modules = ["nodejs-20", "web"]
+modules = ["web", "nodejs-22"]
 [agent]
 expertMode = true
 stack = "BEST_EFFORT_FALLBACK"
@@ -37,5 +37,4 @@ externalPort = 80
 [deployment]
 deploymentTarget = "autoscale"
 build = ["bun", "run", "build"]
-publicDir = "dist/client"
 run = ["bun", "run", "start"]
