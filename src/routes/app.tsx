@@ -33,7 +33,7 @@ function AppDashboard() {
   const [simSummary, setSimSummary] = useState<string>("");
   const [demoDismissed, setDemoDismissed] = useState(false);
 
-  const isDemo = !selectedWallet && events.length === 0;
+  const isDemo = false;
   const displayWallet = isDemo ? DEMO_WALLET_FULL : (selectedWallet ?? "No wallet connected");
   const displayEvents = isDemo ? DEMO_EVENTS : events;
 
