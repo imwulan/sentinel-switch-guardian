@@ -123,8 +123,8 @@ function Logos() {
 
 function Stats() {
   const stats = [
-    { v: "23,901", l: "Wallets protected" },
-    { v: "$48.2M", l: "Threats blocked" },
+    { v: "Beta Security Engine", l: "Status" },
+    { v: "Devnet Monitoring Active", l: "Monitoring" },
     { v: "142", l: "Behavioral signals" },
     { v: "<400ms", l: "Decision latency" },
   ];

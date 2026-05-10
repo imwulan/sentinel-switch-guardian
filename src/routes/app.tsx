@@ -32,6 +32,11 @@ function AppDashboard() {
   const [simState, setSimState] = useState<"idle" | "loading" | "done">("idle");
   const [simSummary, setSimSummary] = useState<string>("");
   const [demoDismissed, setDemoDismissed] = useState(false);
+  const [threatSimulating, setThreatSimulating] = useState(false);
+  const [threatCountdown, setThreatCountdown] = useState(30);
+  const [threatResolved, setThreatResolved] = useState<null | "auto">(null);
+  const [pulse, setPulse] = useState(false);
+  const [modalType, setModalType] = useState<'normal' | 'threat'>('normal');
 
   const isDemo = false;
   const displayWallet = isDemo ? DEMO_WALLET_FULL : (selectedWallet ?? "No wallet connected");
@@ -43,7 +48,19 @@ function AppDashboard() {
     return "normal";
   }, [displayEvents]);
 
-  const trigger = () => setOpen(true);
+  useEffect(() => {
+    if (!threatSimulating || threatResolved) return;
+    if (threatCountdown <= 0) {
+      setThreatResolved("auto");
+      setPulse(false);
+      toast.error("Transaction auto-blocked by Sentinel");
+      return;
+    }
+    const id = setTimeout(() => setThreatCountdown((s) => s - 1), 1000);
+    return () => clearTimeout(id);
+  }, [threatCountdown, threatSimulating, threatResolved]);
+
+  const trigger = () => { setModalType('normal'); setOpen(true); };
 
   const runSimulation = async () => {
     if (!txToSimulate.trim()) {
@@ -65,15 +82,16 @@ function AppDashboard() {
   return (
     <div className="min-h-screen pb-24 md:pb-8">
       <div className="pointer-events-none fixed inset-0 grid-bg opacity-40" />
+      {pulse && <div className="fixed inset-0 bg-red-500/20 animate-pulse pointer-events-none z-40" />}
       <main className="relative mx-auto max-w-7xl space-y-5 p-4 md:p-6">
         {isDemo && !demoDismissed && <DemoBanner onDismiss={() => setDemoDismissed(true)} />}
         <Header status={status} wallet={displayWallet} />
         <SubNav />
-        <Hero onTrigger={trigger} status={status} isDemo={isDemo} />
+        <Hero onTrigger={trigger} onSimulateThreat={() => { setModalType('threat'); setThreatSimulating(true); setThreatCountdown(30); setThreatResolved(null); setPulse(true); setOpen(true); }} onReset={() => { setThreatSimulating(false); setThreatCountdown(30); setThreatResolved(null); setPulse(false); setOpen(false); }} status={status} isDemo={isDemo} />
         <ThreatTicker />
         <div className="grid gap-5 lg:grid-cols-3">
           <div className="space-y-5 lg:col-span-2">
-            <AIScoreCard status={status} isDemo={isDemo} />
+            <AIScoreCard status={status} isDemo={isDemo} overrideScore={threatSimulating ? 88 : undefined} />
             <RiskHistoryChart events={displayEvents} isDemo={isDemo} />
             <BehaviorPanel />
             <ActivityFeed items={displayEvents} />
@@ -81,7 +99,7 @@ function AppDashboard() {
           <div className="space-y-5">
             <SecurityPanel events={displayEvents} />
             <SimulationCard onSimulate={runSimulation} value={txToSimulate} onChange={setTxToSimulate} status={simState} summary={simSummary} />
-            <SwitchCard onTrigger={trigger} />
+            <SwitchCard onTrigger={trigger} isSimulating={threatSimulating} countdown={threatCountdown} resolved={threatResolved} onReset={() => { setThreatSimulating(false); setThreatCountdown(30); setThreatResolved(null); setPulse(false); setOpen(false); }} />
           </div>
         </div>
       </main>
@@ -108,14 +126,46 @@ function AppDashboard() {
       </nav>
 
       <AnomalyModal
-        open={open}
+        open={modalType === 'normal' && open}
         countdown={settings.countdown}
         onApprove={() => setOpen(false)}
         onKill={() => setOpen(false)}
         onClose={() => setOpen(false)}
       />
 
+      <ThreatModal open={modalType === 'threat' && open} onClose={() => setOpen(false)} />
+
       <OnboardingModal />
+    </div>
+  );
+}
+
+function ThreatModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+      <div className="glass rounded-2xl p-6 max-w-md mx-4">
+        <div className="flex items-center gap-2 mb-4">
+          <AlertTriangle className="h-5 w-5 text-threat" />
+          <h2 className="text-lg font-bold text-threat uppercase tracking-wider">Anomaly Detected</h2>
+        </div>
+        <div className="space-y-3">
+          <div className="flex justify-between items-center">
+            <span className="text-sm text-muted-foreground">Risk:</span>
+            <span className="font-bold text-threat">HIGH (88/100)</span>
+          </div>
+          <div>
+            <p className="text-sm text-muted-foreground mb-2">Reason:</p>
+            <ul className="text-xs text-muted-foreground space-y-1 ml-4">
+              <li>• Unknown program interaction</li>
+              <li>• Unusual amount (5.2 SOL)</li>
+              <li>• Outside normal activity hours</li>
+            </ul>
+          </div>
+        </div>
+        <button onClick={onClose} className="mt-6 w-full rounded-xl bg-secondary px-4 py-2 text-sm font-medium hover:bg-secondary/80 transition-colors">Close</button>
+      </div>
     </div>
   );
 }
@@ -134,7 +184,7 @@ function SimulationCard({ value, onChange, onSimulate, status, summary }: { valu
   );
 }
 
-function Hero({ onTrigger, status, isDemo }: { onTrigger: () => void; status: WalletStatus; isDemo?: boolean }) {
+function Hero({ onTrigger, onSimulateThreat, onReset, status, isDemo }: { onTrigger: () => void; onSimulateThreat: () => void; onReset: () => void; status: WalletStatus; isDemo?: boolean }) {
   return (
     <section className="glass relative overflow-hidden rounded-3xl p-7 md:p-10 scanline">
       <div className="relative z-10 grid items-center gap-6 md:grid-cols-[1.4fr_1fr]">
@@ -153,11 +203,12 @@ function Hero({ onTrigger, status, isDemo }: { onTrigger: () => void; status: Wa
             Sentinel Switch builds a behavioral fingerprint of your on-chain activity and freezes anything that doesn't fit. One tap to approve. One tap to kill.
           </p>
           <div className="mt-6 flex flex-wrap items-center gap-3">
-            <button onClick={onTrigger} className="group inline-flex items-center gap-2 rounded-xl bg-threat px-5 py-3 text-sm font-bold uppercase tracking-wider text-white glow-threat transition-transform hover:scale-[1.03]">
+            <button onClick={onSimulateThreat} className="group inline-flex items-center gap-2 rounded-xl bg-threat px-5 py-3 text-sm font-bold uppercase tracking-wider text-white glow-threat transition-transform hover:scale-[1.03]">
               <AlertTriangle className="h-4 w-4" />
               Simulate threat
             </button>
             <button className="rounded-xl border border-border bg-secondary/60 px-5 py-3 text-sm font-medium text-foreground/90 transition-colors hover:bg-secondary">View baseline</button>
+            <button onClick={onReset} className="rounded-xl border border-border bg-secondary/60 px-5 py-3 text-sm font-medium text-foreground/90 transition-colors hover:bg-secondary">Reset</button>
           </div>
         </div>
         <div className="relative grid place-items-center">
@@ -179,15 +230,37 @@ function Hero({ onTrigger, status, isDemo }: { onTrigger: () => void; status: Wa
   );
 }
 
-function SwitchCard({ onTrigger }: { onTrigger: () => void }) {
+function SwitchCard({ onTrigger, isSimulating, countdown, resolved, onReset }: { onTrigger: () => void; isSimulating: boolean; countdown: number; resolved: null | "auto"; onReset: () => void }) {
+  if (isSimulating) {
+    return (
+      <section className="glass rounded-2xl p-6">
+        <h2 className="mb-1 text-sm font-semibold uppercase tracking-[0.16em] text-muted-foreground">The Switch</h2>
+        <div className="mt-6 text-center">
+          <div className="relative h-24 w-24 mx-auto">
+            <svg viewBox="0 0 100 100" className="h-full w-full -rotate-90">
+              <circle cx="50" cy="50" r="42" strokeWidth="8" className="stroke-secondary" fill="none" />
+              <circle cx="50" cy="50" r="42" strokeWidth="8" fill="none" strokeLinecap="round" className="stroke-threat" strokeDasharray="264" strokeDashoffset={264 - (264 * countdown) / 30} />
+            </svg>
+            <div className="absolute inset-0 grid place-items-center">
+              <p className="font-mono text-xl font-bold text-threat">{countdown}</p>
+            </div>
+          </div>
+          <p className="mt-2 text-xs text-muted-foreground">seconds left</p>
+          {resolved === "auto" && <p className="mt-4 text-sm text-threat">Transaction auto-blocked by Sentinel</p>}
+          <button onClick={onReset} className="mt-4 rounded-xl bg-secondary px-4 py-2 text-sm">Reset</button>
+        </div>
+      </section>
+    );
+  }
+
   const TOTAL = 30;
   const [secondsLeft, setSecondsLeft] = useState(TOTAL);
-  const [resolved, setResolved] = useState<null | "approved" | "killed" | "auto">(null);
+  const [resolvedNormal, setResolvedNormal] = useState<null | "approved" | "killed" | "auto">(null);
 
   useEffect(() => {
-    if (resolved) return;
+    if (resolvedNormal) return;
     if (secondsLeft <= 0) {
-      setResolved("auto");
+      setResolvedNormal("auto");
       toast.error("Transaction auto-blocked", {
         icon: <ShieldAlert className="h-4 w-4 text-threat" />,
         description: "No decision within 30s — Sentinel blocked it by default.",
@@ -196,19 +269,19 @@ function SwitchCard({ onTrigger }: { onTrigger: () => void }) {
     }
     const id = setTimeout(() => setSecondsLeft((s) => s - 1), 1000);
     return () => clearTimeout(id);
-  }, [secondsLeft, resolved]);
+  }, [secondsLeft, resolvedNormal]);
 
   const handleApprove = () => {
-    if (resolved) return;
-    setResolved("approved");
+    if (resolvedNormal) return;
+    setResolvedNormal("approved");
     toast.success("Transaction approved", {
       icon: <ShieldCheck className="h-4 w-4 text-safe" />,
       description: "Swap of 1.2 SOL → USDC sent to Jupiter v6.",
     });
   };
   const handleKill = () => {
-    if (resolved) return;
-    setResolved("killed");
+    if (resolvedNormal) return;
+    setResolvedNormal("killed");
     toast.error("Transaction blocked", {
       icon: <ShieldAlert className="h-4 w-4 text-threat" />,
       description: "Sentinel killed the pending swap before broadcast.",
@@ -216,12 +289,12 @@ function SwitchCard({ onTrigger }: { onTrigger: () => void }) {
     onTrigger?.();
   };
   const reset = () => {
-    setResolved(null);
+    setResolvedNormal(null);
     setSecondsLeft(TOTAL);
   };
 
   const pct = (secondsLeft / TOTAL) * 100;
-  const disabled = resolved !== null;
+  const disabled = resolvedNormal !== null;
 
   return (
     <section className="glass rounded-2xl p-6">
@@ -230,7 +303,7 @@ function SwitchCard({ onTrigger }: { onTrigger: () => void }) {
           <h2 className="text-sm font-semibold uppercase tracking-[0.16em] text-muted-foreground">The Switch</h2>
           <p className="text-xs text-muted-foreground">Manual override for the next pending transaction.</p>
         </div>
-        {resolved && (
+        {resolvedNormal && (
           <button onClick={reset} className="rounded-md border border-white/10 px-2 py-1 text-[10px] uppercase tracking-wider text-muted-foreground hover:bg-white/5">
             New tx
           </button>
@@ -283,10 +356,10 @@ function SwitchCard({ onTrigger }: { onTrigger: () => void }) {
         <div>
           <div className="mb-1.5 flex items-center justify-between text-[11px]">
             <span className="text-muted-foreground">
-              {resolved === "approved" && "Approved"}
-              {resolved === "killed" && "Killed by user"}
-              {resolved === "auto" && "Auto-blocked"}
-              {!resolved && "Auto-block in"}
+              {resolvedNormal === "approved" && "Approved"}
+              {resolvedNormal === "killed" && "Killed by user"}
+              {resolvedNormal === "auto" && "Auto-blocked"}
+              {!resolvedNormal && "Auto-block in"}
             </span>
             <span className={cn("font-mono", secondsLeft <= 10 && !resolved ? "text-warn" : "text-muted-foreground")}>
               {secondsLeft}s
@@ -296,9 +369,9 @@ function SwitchCard({ onTrigger }: { onTrigger: () => void }) {
             <div
               className={cn(
                 "h-full transition-all duration-1000 ease-linear",
-                resolved === "approved" ? "bg-safe" : resolved ? "bg-threat" : secondsLeft <= 10 ? "bg-warn" : "bg-safe",
+                resolvedNormal === "approved" ? "bg-safe" : resolvedNormal ? "bg-threat" : secondsLeft <= 10 ? "bg-warn" : "bg-safe",
               )}
-              style={{ width: `${resolved ? 100 : pct}%` }}
+              style={{ width: `${resolvedNormal ? 100 : pct}%` }}
             />
           </div>
         </div>
@@ -380,8 +453,8 @@ function ThreatTicker() {
   );
 }
 
-function AIScoreCard({ status, isDemo }: { status: WalletStatus; isDemo?: boolean }) {
-  const target = status === "threat" ? 88 : status === "suspicious" ? 52 : 14;
+function AIScoreCard({ status, isDemo, overrideScore }: { status: WalletStatus; isDemo?: boolean; overrideScore?: number }) {
+  const target = overrideScore ?? (status === "threat" ? 88 : status === "suspicious" ? 52 : 14);
   const [score, setScore] = useState(isDemo ? 0 : target);
 
   useEffect(() => {

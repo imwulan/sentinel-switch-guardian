@@ -47,9 +47,9 @@ function IntelPage() {
 
         <div className="grid gap-4 md:grid-cols-3">
           {[
-            { l: "Threats blocked (24h)", v: "1,284", c: "text-safe" },
+            { l: "Devnet Monitoring Active", v: "Active", c: "text-safe" },
             { l: "Active drainer clusters", v: "7", c: "text-threat" },
-            { l: "Wallets protected", v: "23,901", c: "text-foreground" },
+            { l: "Beta Security Engine", v: "Online", c: "text-foreground" },
           ].map((s) => (
             <div key={s.l} className="glass rounded-2xl p-5">
               <p className="text-[11px] uppercase tracking-wider text-muted-foreground">{s.l}</p>
