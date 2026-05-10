@@ -15,6 +15,34 @@ import { AlertTriangle, Home, Activity, Bell, Settings, Wallet, Brain, ShieldChe
 import { DEMO_BALANCE_SOL, DEMO_EVENTS, DEMO_WALLET_FULL, DEMO_WALLET_SHORT } from "@/lib/demo";
 import { cn } from "@/lib/utils";
 
+function WalletHeader({ wallet, balance }: { wallet: string; balance: number }) {
+  return (
+    <section className="glass rounded-2xl p-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-sm font-semibold uppercase tracking-[0.16em] text-muted-foreground">Protected Wallet</h2>
+          <p className="mt-1 font-mono text-lg font-bold">{wallet}</p>
+        </div>
+        <div className="text-right">
+          <p className="text-sm text-muted-foreground">SOL Balance</p>
+          <p className="font-mono text-lg font-bold">{balance.toFixed(2)} SOL</p>
+        </div>
+        <div className="text-right">
+          <p className="text-sm text-muted-foreground">Network</p>
+          <p className="font-mono text-sm font-bold">Mainnet</p>
+        </div>
+        <div className="text-right">
+          <p className="text-sm text-muted-foreground">Guardian Status</p>
+          <span className="inline-flex items-center gap-1 rounded-full bg-safe/10 px-2 py-1 text-xs font-semibold text-safe">
+            <span className="h-1.5 w-1.5 rounded-full bg-safe" />
+            ACTIVE
+          </span>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export const Route = createFileRoute("/app")({
   component: AppDashboard,
   head: () => ({
@@ -37,6 +65,8 @@ function AppDashboard() {
   const [threatResolved, setThreatResolved] = useState<null | "auto">(null);
   const [pulse, setPulse] = useState(false);
   const [modalType, setModalType] = useState<'normal' | 'threat'>('normal');
+  const [scanning, setScanning] = useState(false);
+  const [scanningTexts, setScanningTexts] = useState<string[]>([]);
 
   const isDemo = false;
   const displayWallet = isDemo ? DEMO_WALLET_FULL : (selectedWallet ?? "No wallet connected");
@@ -86,8 +116,27 @@ function AppDashboard() {
       <main className="relative mx-auto max-w-7xl space-y-5 p-4 md:p-6">
         {isDemo && !demoDismissed && <DemoBanner onDismiss={() => setDemoDismissed(true)} />}
         <Header status={status} wallet={displayWallet} />
+        {selectedWallet && <WalletHeader wallet={displayWallet} balance={isDemo ? DEMO_BALANCE_SOL : 0} />}
         <SubNav />
-        <Hero onTrigger={trigger} onSimulateThreat={() => { setModalType('threat'); setThreatSimulating(true); setThreatCountdown(30); setThreatResolved(null); setPulse(true); setOpen(true); }} onReset={() => { setThreatSimulating(false); setThreatCountdown(30); setThreatResolved(null); setPulse(false); setOpen(false); }} status={status} isDemo={isDemo} />
+        <Hero onTrigger={trigger} onSimulateThreat={() => {
+          setScanning(true);
+          setScanningTexts([]);
+          const texts = ["Analyzing behavior...", "Cross-checking baseline...", "Unknown destination detected..."];
+          texts.forEach((text, i) => {
+            setTimeout(() => {
+              setScanningTexts(prev => [...prev, text]);
+            }, (i + 1) * 800);
+          });
+          setTimeout(() => {
+            setScanning(false);
+            setModalType('threat');
+            setThreatSimulating(true);
+            setThreatCountdown(30);
+            setThreatResolved(null);
+            setPulse(true);
+            setOpen(true);
+          }, texts.length * 800 + 500);
+        }} onReset={() => { setThreatSimulating(false); setThreatCountdown(30); setThreatResolved(null); setPulse(false); setOpen(false); }} status={status} isDemo={isDemo} />
         <ThreatTicker />
         <div className="grid gap-5 lg:grid-cols-3">
           <div className="space-y-5 lg:col-span-2">
@@ -135,6 +184,8 @@ function AppDashboard() {
 
       <ThreatModal open={modalType === 'threat' && open} onClose={() => setOpen(false)} />
 
+      <ScanningOverlay texts={scanningTexts} />
+
       <OnboardingModal />
     </div>
   );
@@ -163,8 +214,36 @@ function ThreatModal({ open, onClose }: { open: boolean; onClose: () => void }) 
               <li>• Outside normal activity hours</li>
             </ul>
           </div>
+          <div>
+            <p className="text-sm text-muted-foreground mb-2">Flagged because:</p>
+            <ul className="text-xs text-muted-foreground space-y-1 ml-4">
+              <li>• Transaction amount 12x above normal</li>
+              <li>• New wallet destination</li>
+              <li>• Outside usual active hours (14:00-22:00 UTC)</li>
+            </ul>
+          </div>
         </div>
         <button onClick={onClose} className="mt-6 w-full rounded-xl bg-secondary px-4 py-2 text-sm font-medium hover:bg-secondary/80 transition-colors">Close</button>
+      </div>
+    </div>
+  );
+}
+
+function ScanningOverlay({ texts }: { texts: string[] }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+      <div className="glass rounded-2xl p-8 max-w-md mx-4">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="h-6 w-6 border-2 border-safe border-t-transparent rounded-full animate-spin" />
+          <h2 className="text-lg font-bold text-safe">Sentinel Scanning</h2>
+        </div>
+        <div className="space-y-2">
+          {texts.map((text, i) => (
+            <p key={i} className="text-sm text-muted-foreground animate-fadeIn">
+              {text}
+            </p>
+          ))}
+        </div>
       </div>
     </div>
   );
@@ -246,7 +325,15 @@ function SwitchCard({ onTrigger, isSimulating, countdown, resolved, onReset }: {
             </div>
           </div>
           <p className="mt-2 text-xs text-muted-foreground">seconds left</p>
-          {resolved === "auto" && <p className="mt-4 text-sm text-threat">Transaction auto-blocked by Sentinel</p>}
+          {resolved === "auto" && (
+            <div className="mt-4 p-4 bg-threat/10 border border-threat/30 rounded-lg">
+              <div className="flex items-center gap-2 mb-2">
+                <ShieldAlert className="h-5 w-5 text-threat" />
+                <p className="text-sm font-bold text-threat">Transaction automatically blocked.</p>
+              </div>
+              <p className="text-xs text-muted-foreground">Sentinel prevented suspicious behavior.</p>
+            </div>
+          )}
           <button onClick={onReset} className="mt-4 rounded-xl bg-secondary px-4 py-2 text-sm">Reset</button>
         </div>
       </section>
@@ -436,7 +523,7 @@ function ThreatTicker() {
   const items = [
     "🚨 Drainer cluster active — 12 wallets compromised in the last hour",
     "⚠️ Program Pdr…7Xa2 flagged as malicious (98% confidence)",
-    "🛡 23,901 wallets currently protected by Sentinel",
+    "🛡 Sentinel Beta Security Engine active",
     "🔥 $RUGME token confirmed honeypot — 100% buy tax",
   ];
   return (

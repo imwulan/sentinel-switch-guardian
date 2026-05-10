@@ -16,9 +16,9 @@ const riskStyle = {
   high: "text-threat bg-threat/10 border-threat/30",
 };
 
-function relativeTime(timestamp: number) {
-  const sec = Math.max(1, Math.floor((Date.now() - timestamp) / 1000));
-  if (sec < 60) return `${sec}s ago`;
+function relativeTime(timestamp: number, currentTime: number) {
+  const sec = Math.max(1, Math.floor((currentTime - timestamp) / 1000));
+  if (sec < 60) return sec === 1 ? "just now" : `${sec}s ago`;
   const min = Math.floor(sec / 60);
   if (min < 60) return `${min}m ago`;
   const hrs = Math.floor(min / 60);
@@ -28,6 +28,12 @@ function relativeTime(timestamp: number) {
 export function ActivityFeed({ items }: { items: SentinelEvent[] }) {
   const prevIdsRef = useRef<Set<string>>(new Set());
   const [newIds, setNewIds] = useState<Set<string>>(new Set());
+  const [currentTime, setCurrentTime] = useState(Date.now());
+
+  useEffect(() => {
+    const interval = setInterval(() => setCurrentTime(Date.now()), 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     const incoming = items.filter((e) => !prevIdsRef.current.has(e.id));
@@ -48,7 +54,7 @@ export function ActivityFeed({ items }: { items: SentinelEvent[] }) {
         </h2>
         <span className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
           <span className="h-1.5 w-1.5 rounded-full bg-safe ticker" />
-          live
+          live via Solana RPC
         </span>
       </div>
 
@@ -81,7 +87,7 @@ export function ActivityFeed({ items }: { items: SentinelEvent[] }) {
                 </p>
                 <p className="truncate font-mono text-xs text-muted-foreground">{it.detail}</p>
               </div>
-              <span className="hidden text-xs text-muted-foreground sm:inline">{relativeTime(it.timestamp)}</span>
+              <span className="hidden text-xs text-muted-foreground sm:inline">{relativeTime(it.timestamp, currentTime)}</span>
               <a
                 href={`https://solscan.io/tx/${it.signature}`}
                 target="_blank"
