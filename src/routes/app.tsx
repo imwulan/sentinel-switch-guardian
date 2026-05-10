@@ -125,7 +125,7 @@ function AppDashboard() {
           texts.forEach((text, i) => {
             setTimeout(() => {
               setScanningTexts(prev => [...prev, text]);
-            }, (i + 1) * 500);
+            }, (i + 1) * 200);
           });
           setTimeout(() => {
             setScanning(false);
@@ -135,7 +135,7 @@ function AppDashboard() {
             setThreatResolved(null);
             setPulse(true);
             setOpen(true);
-          }, texts.length * 500 + 300);
+          }, texts.length * 200 + 100);
         }} onReset={() => { setThreatSimulating(false); setThreatCountdown(30); setThreatResolved(null); setPulse(false); setOpen(false); }} status={status} isDemo={isDemo} />
         <ThreatTicker />
         <div className="grid gap-5 lg:grid-cols-3">
